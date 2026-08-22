@@ -3,6 +3,7 @@ import { Button } from '../../shared/ui/button.tsx'
 import { audioEngine, useAudioStore } from '../audio/audio-engine.ts'
 import { beginScrub, endScrub, scrubTo } from '../audio/scrub-player.ts'
 import { selectionRange, useEditorStore } from '../editor/editor-store.ts'
+import { readViewState, saveViewState } from '../persistence/view-state.ts'
 import { useSettingsStore } from '../settings/settings-store.ts'
 import { usePeaksStore } from './peaks-store.ts'
 import { setSkimmerMs } from './skimmer.ts'
@@ -12,6 +13,7 @@ import { computeWindow, zoomAroundRatio } from './waveform-window.ts'
 const MARKER_HIT_PX = 6
 /** Pointer travel that turns a click into a drag. Below it, a press is a plain seek. */
 const DRAG_THRESHOLD_PX = 3
+const DEFAULT_SPAN_MS = 20_000
 const MIN_SPAN_MS = 1500
 const MAX_SPAN_MS = 600_000
 
@@ -37,8 +39,14 @@ export function WaveformView() {
   const skimmingEnabled = useSettingsStore((state) => state.skimming)
   const updateSettings = useSettingsStore((state) => state.update)
 
-  const [spanMs, setSpanMs] = useState(20_000)
-  const [centerMs, setCenterMs] = useState(0)
+  const [spanMs, setSpanMs] = useState(() => {
+    const stored = readViewState().spanMs
+    return stored === undefined ? DEFAULT_SPAN_MS : clampSpan({ spanMs: stored })
+  })
+  const [centerMs, setCenterMs] = useState(() => {
+    const stored = readViewState().centerMs
+    return stored === undefined ? 0 : stored
+  })
   const [drag, setDrag] = useState<Drag | null>(null)
   const detailRef = useRef<HTMLDivElement>(null)
   const overviewScrubbing = useRef(false)
@@ -46,6 +54,10 @@ export function WaveformView() {
   const hasDragged = useRef(false)
 
   const follow = followSetting && drag === null
+
+  useEffect(() => {
+    saveViewState({ patch: { spanMs, centerMs } })
+  }, [spanMs, centerMs])
 
   // Turning skimming off from the key or the checkbox should drop any line already drawn.
   useEffect(() => {

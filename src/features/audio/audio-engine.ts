@@ -27,14 +27,18 @@ element.preload = 'auto'
 const listeners = new Set<TimeListener>()
 let objectUrl: string | null = null
 let stopAtMs: number | null = null
+/** Position to jump to as soon as the browser knows the track's duration. */
+let startAtMs = 0
 let frame = 0
 
 element.addEventListener('loadedmetadata', () => {
-  useAudioStore.setState({
-    isReady: true,
-    durationMs: Number.isFinite(element.duration) ? element.duration * 1000 : 0,
-    error: null,
-  })
+  const durationMs = Number.isFinite(element.duration) ? element.duration * 1000 : 0
+  useAudioStore.setState({ isReady: true, durationMs, error: null })
+
+  // currentTime is only writable once the duration is known, so a restored
+  // position waits here rather than at load time.
+  if (startAtMs > 0) element.currentTime = Math.min(startAtMs, durationMs) / 1000
+  startAtMs = 0
   emit()
 })
 
@@ -97,10 +101,12 @@ function stopFrameLoop(): void {
  * consumers (the waveform canvas and the clock) need it that often.
  */
 export const audioEngine = {
-  load({ blob }: { blob: Blob }): void {
+  /** `startAtMs` is where playback should resume — 0 for a freshly opened file. */
+  load({ blob, startAtMs: resumeMs }: { blob: Blob; startAtMs: number }): void {
     if (objectUrl !== null) URL.revokeObjectURL(objectUrl)
     objectUrl = URL.createObjectURL(blob)
     stopAtMs = null
+    startAtMs = Math.max(0, resumeMs)
     useAudioStore.setState({ isReady: false, isPlaying: false, durationMs: 0, error: null })
     element.src = objectUrl
     element.load()

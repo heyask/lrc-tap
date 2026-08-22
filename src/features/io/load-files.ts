@@ -16,7 +16,7 @@ export function isAudioFile({ file }: { file: File }): boolean {
 }
 
 export async function adoptAudioFile({ file }: { file: File }): Promise<void> {
-  audioEngine.load({ blob: file })
+  audioEngine.load({ blob: file, startAtMs: 0 })
   useEditorStore.getState().setAudioFileName({ audioFileName: file.name })
   await Promise.all([loadPeaks({ blob: file }), saveAudio({ blob: file, fileName: file.name })])
 }

@@ -16,6 +16,8 @@ type StoredDocument = {
   lines: LyricLine[]
   metadata: LrcMetadata
   cursorIndex: number
+  /** Null when only the cursor line is selected. */
+  selectionAnchor: number | null
 }
 
 type SessionState = {
@@ -71,6 +73,7 @@ export async function readStoredDocument(): Promise<StoredDocument | null> {
     lines,
     metadata: toMetadata({ value: value.metadata }),
     cursorIndex: value.cursorIndex,
+    selectionAnchor: readSelectionAnchor({ value }),
   }
 }
 
@@ -80,6 +83,12 @@ export async function clearStoredSession(): Promise<void> {
     saveTimer = null
   }
   await Promise.all([del(AUDIO_KEY, store), del(DOCUMENT_KEY, store)]).catch(() => undefined)
+}
+
+/** Sessions saved before ranges were persisted simply have no anchor. */
+function readSelectionAnchor({ value }: { value: object }): number | null {
+  if (!('selectionAnchor' in value)) return null
+  return typeof value.selectionAnchor === 'number' ? value.selectionAnchor : null
 }
 
 function isLyricLine(value: unknown): value is LyricLine {

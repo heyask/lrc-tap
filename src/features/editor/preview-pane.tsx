@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { cx } from '../../shared/ui/cx.ts'
+import { scrollRowIntoView } from '../../shared/ui/scroll-into-view.ts'
 import { audioEngine } from '../audio/audio-engine.ts'
 import { useActiveLineIndex } from '../audio/use-current-time.ts'
 import { useEditorStore } from './editor-store.ts'
@@ -12,8 +13,9 @@ export function PreviewPane() {
 
   useEffect(() => {
     if (activeIndex < 0) return
-    const row = containerRef.current?.querySelector(`[data-preview-index="${activeIndex}"]`)
-    row?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    scrollRowIntoView({
+      row: containerRef.current?.querySelector(`[data-preview-index="${activeIndex}"]`),
+    })
   }, [activeIndex])
 
   return (

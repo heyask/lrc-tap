@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { scrollRowIntoView } from '../../shared/ui/scroll-into-view.ts'
 import { useAudioStore } from '../audio/audio-engine.ts'
 import { useActiveLineIndex } from '../audio/use-current-time.ts'
 import { useSettingsStore } from '../settings/settings-store.ts'
@@ -27,12 +28,12 @@ export function LyricList() {
   const issues = useMemo(() => new Set(findOrderingIssues({ lines })), [lines])
 
   useEffect(() => {
-    scrollRowIntoView({ container: containerRef.current, index: cursorIndex })
+    scrollToLine({ container: containerRef.current, index: cursorIndex })
   }, [cursorIndex])
 
   useEffect(() => {
     if (!isPlaying || !followPlayhead || activeIndex < 0) return
-    scrollRowIntoView({ container: containerRef.current, index: activeIndex })
+    scrollToLine({ container: containerRef.current, index: activeIndex })
   }, [activeIndex, isPlaying, followPlayhead])
 
   /** Grabbing a row outside the selection makes that row the selection. */
@@ -88,14 +89,12 @@ export function LyricList() {
   )
 }
 
-function scrollRowIntoView({
+function scrollToLine({
   container,
   index,
 }: {
   container: HTMLDivElement | null
   index: number
 }): void {
-  const row = container?.querySelector(`[data-line-index="${index}"]`)
-  if (row === null || row === undefined) return
-  row.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  scrollRowIntoView({ row: container?.querySelector(`[data-line-index="${index}"]`) })
 }

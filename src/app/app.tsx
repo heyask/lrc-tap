@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { TransportBar } from '../features/audio/transport-bar.tsx'
 import { useEditorStore } from '../features/editor/editor-store.ts'
 import { EditorToolbar } from '../features/editor/editor-toolbar.tsx'
@@ -9,6 +9,7 @@ import { ExportPanel } from '../features/io/export-panel.tsx'
 import { DropOverlay } from '../features/io/file-drop.tsx'
 import { FilesPanel } from '../features/io/files-panel.tsx'
 import { MetadataPanel } from '../features/lrc/metadata-panel.tsx'
+import { readViewState, saveViewState } from '../features/persistence/view-state.ts'
 import { SettingsPanel } from '../features/settings/settings-panel.tsx'
 import { WaveformView } from '../features/waveform/waveform-view.tsx'
 import { Button } from '../shared/ui/button.tsx'
@@ -16,7 +17,7 @@ import { EmptyState } from './empty-state.tsx'
 import { useGlobalShortcuts } from './global-shortcuts.ts'
 import { NoticeBar } from './notice-bar.tsx'
 import { ShortcutBar } from './shortcut-bar.tsx'
-import { useSessionAutosave, useSessionRestore } from './use-session.ts'
+import { useSessionAutosave, useSessionRestore, useViewStateAutosave } from './use-session.ts'
 
 type Mode = 'edit' | 'preview'
 
@@ -24,8 +25,16 @@ export function App() {
   useGlobalShortcuts()
   useSessionRestore()
   useSessionAutosave()
+  useViewStateAutosave()
 
-  const [mode, setMode] = useState<Mode>('edit')
+  const [mode, setMode] = useState<Mode>(() => {
+    const stored = readViewState().mode
+    return stored === undefined ? 'edit' : stored
+  })
+
+  useEffect(() => {
+    saveViewState({ patch: { mode } })
+  }, [mode])
   const lineCount = useEditorStore((state) => state.lines.length)
 
   return (

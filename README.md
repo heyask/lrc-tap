@@ -61,7 +61,9 @@ OGG, WAV, FLAC. Exports standard line-level `[mm:ss.xx]` LRC; lines you haven't
 tagged yet are written without a timestamp so a draft round-trips intact.
 
 Your track, lyrics and timestamps are kept in IndexedDB, so a reload picks up
-exactly where you left off. **Start over** in the export panel clears them.
+exactly where you left off — the same line selected and scrolled to, the same
+playback position, the same waveform zoom. **Start over** in the export panel
+clears them.
 
 ## Development
 
