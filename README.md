@@ -34,6 +34,7 @@ or press `⌥↑` / `⌥↓`; the timestamps travel with the words.
 | `←` `→` | Seek 3s (`⇧` 1s, `⌥` 10s) |
 | `[` `]` | Nudge the selection by 10ms (`⇧` 100ms, `⌥` 500ms) |
 | `Tab` | Jump to the next line without a timestamp |
+| `S` | Turn waveform skimming on or off |
 | `Esc` | Stop, and leave re-sync mode |
 | `⌘Z` / `⌘⇧Z` | Undo / redo |
 | `⌘S` | Download the `.lrc` |
@@ -41,11 +42,15 @@ or press `⌥↑` / `⌥↓`; the timestamps travel with the words.
 
 Buttons carry their own key: the main ones print it, the rest show it on hover.
 
-On the waveform: click anywhere to seek without interrupting playback, drag a
-marker to move that line, `⌥`-drag to pan, `⌃`-scroll to zoom. Dragging pauses
-playback and scrubs the audio under the pointer instead — you hear only as much
-as you drag, so you can place a line by ear. Turn it off with "Hear the audio
-while dragging" if you would rather work in silence.
+On the waveform: just hovering skims. A dashed marker follows the pointer and,
+while the track is paused, plays the audio under it — so you can find where a
+line starts without clicking anything. The playhead stays put until you click.
+`S` turns skimming off.
+
+Dragging pauses playback and scrubs instead: you hear only as much as you drag,
+so a line can be placed by ear. Drag a marker to move that line, `⌥`-drag to
+pan, `⌃`-scroll to zoom. "Hear the audio while dragging" silences both if you
+would rather work without sound.
 
 ## Formats
 

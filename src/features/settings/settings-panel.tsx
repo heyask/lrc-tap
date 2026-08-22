@@ -5,6 +5,7 @@ export function SettingsPanel() {
   const tapOffsetMs = useSettingsStore((state) => state.tapOffsetMs)
   const auditionOnSelect = useSettingsStore((state) => state.auditionOnSelect)
   const scrubAudio = useSettingsStore((state) => state.scrubAudio)
+  const skimming = useSettingsStore((state) => state.skimming)
   const update = useSettingsStore((state) => state.update)
 
   return (
@@ -46,6 +47,16 @@ export function SettingsPanel() {
           className="accent-teal-400"
         />
         Hear the audio while dragging
+      </label>
+
+      <label className="flex items-center gap-2 py-1 text-sm text-zinc-300">
+        <input
+          type="checkbox"
+          checked={skimming}
+          onChange={(event) => update({ patch: { skimming: event.target.checked } })}
+          className="accent-teal-400"
+        />
+        Skim the waveform on hover (S)
       </label>
     </Panel>
   )

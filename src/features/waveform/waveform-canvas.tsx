@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react'
+import { formatTimestamp } from '../../shared/time/format-timestamp.ts'
 import { audioEngine } from '../audio/audio-engine.ts'
 import { Peaks } from '../audio/decode-audio.ts'
 import { LineRange } from '../editor/line-range.ts'
 import { LyricLine } from '../lrc/lyric-line.ts'
+import { getSkimmerMs, subscribeSkimmer } from './skimmer.ts'
 import { computeWindow } from './waveform-window.ts'
 
 const COLORS = {
@@ -12,6 +14,7 @@ const COLORS = {
   markerCursor: '#2dd4bf',
   markerLabel: '#d4d4d8',
   playhead: '#fbbf24',
+  skimmer: '#e4e4e7',
   ruler: '#27272a',
   rulerText: '#52525b',
   resync: 'rgba(45, 212, 191, 0.10)',
@@ -60,12 +63,16 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     })
     observer.observe(canvas)
 
-    const unsubscribe = audioEngine.subscribeTime(draw)
+    const unsubscribeTime = audioEngine.subscribeTime(draw)
+    const unsubscribeSkimmer = subscribeSkimmer(() => {
+      draw(audioEngine.getTimeMs())
+    })
     draw(audioEngine.getTimeMs())
 
     return () => {
       observer.disconnect()
-      unsubscribe()
+      unsubscribeTime()
+      unsubscribeSkimmer()
     }
   }, [])
 
@@ -121,6 +128,49 @@ function paint({
   paintWave({ context, props, width, height, startMs, spanMs, playheadMs, toX })
   if (props.showMarkers) paintMarkers({ context, props, height, toX })
   paintPlayhead({ context, x: toX(playheadMs), height })
+  paintSkimmer({ context, width, height, toX })
+}
+
+/**
+ * The hover position, drawn dashed so it never reads as the playhead. The
+ * label lets the exact moment be read off without clicking.
+ */
+function paintSkimmer({
+  context,
+  width,
+  height,
+  toX,
+}: {
+  context: CanvasRenderingContext2D
+  width: number
+  height: number
+  toX: (timeMs: number) => number
+}): void {
+  const timeMs = getSkimmerMs()
+  if (timeMs === null) return
+
+  const x = Math.round(toX(timeMs)) + 0.5
+  if (x < 0 || x > width) return
+
+  context.save()
+  context.setLineDash([3, 3])
+  context.strokeStyle = COLORS.skimmer
+  context.lineWidth = 1
+  context.beginPath()
+  context.moveTo(x, 0)
+  context.lineTo(x, height)
+  context.stroke()
+  context.restore()
+
+  const label = formatTimestamp({ timeMs })
+  context.font = '10px ui-monospace, SFMono-Regular, monospace'
+  context.textBaseline = 'top'
+  const labelWidth = context.measureText(label).width + 6
+  // Flip the label to the left edge when it would run off the canvas.
+  const labelX = x + labelWidth > width ? x - labelWidth : x + 3
+
+  context.fillStyle = COLORS.skimmer
+  context.fillText(label, labelX, 2)
 }
 
 function paintWave({

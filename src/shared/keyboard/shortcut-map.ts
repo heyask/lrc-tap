@@ -41,6 +41,7 @@ export const SHORTCUT = {
   nudgeForwardMedium: `${SHIFT_LABEL}]`,
   nudgeBackCoarse: `${ALT_LABEL}[`,
   nudgeForwardCoarse: `${ALT_LABEL}]`,
+  toggleSkimming: 'S',
   nextUntagged: 'Tab',
   stop: 'Esc',
   undo: `${MOD_LABEL}Z`,

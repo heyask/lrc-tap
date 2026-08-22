@@ -1,10 +1,11 @@
-import { PointerEvent, useCallback, useRef, useState, WheelEvent } from 'react'
+import { PointerEvent, useCallback, useEffect, useRef, useState, WheelEvent } from 'react'
 import { Button } from '../../shared/ui/button.tsx'
 import { audioEngine, useAudioStore } from '../audio/audio-engine.ts'
 import { beginScrub, endScrub, scrubTo } from '../audio/scrub-player.ts'
 import { selectionRange, useEditorStore } from '../editor/editor-store.ts'
 import { useSettingsStore } from '../settings/settings-store.ts'
 import { usePeaksStore } from './peaks-store.ts'
+import { setSkimmerMs } from './skimmer.ts'
 import { WaveformCanvas } from './waveform-canvas.tsx'
 import { computeWindow } from './waveform-window.ts'
 
@@ -33,6 +34,7 @@ export function WaveformView() {
   const moveCursor = useEditorStore((state) => state.moveCursor)
 
   const followSetting = useSettingsStore((state) => state.followPlayhead)
+  const skimmingEnabled = useSettingsStore((state) => state.skimming)
   const updateSettings = useSettingsStore((state) => state.update)
 
   const [spanMs, setSpanMs] = useState(20_000)
@@ -40,10 +42,20 @@ export function WaveformView() {
   const [drag, setDrag] = useState<Drag | null>(null)
   const detailRef = useRef<HTMLDivElement>(null)
   const overviewScrubbing = useRef(false)
+  /** True once a hover run has opened the scrub player. */
+  const skimming = useRef(false)
   /** Whether the current press has travelled far enough to be a drag. Not rendered. */
   const hasDragged = useRef(false)
 
   const follow = followSetting && drag === null
+
+  // Turning skimming off from the key or the checkbox should drop any line already drawn.
+  useEffect(() => {
+    if (skimmingEnabled) return
+    skimming.current = false
+    endScrub()
+    setSkimmerMs({ timeMs: null })
+  }, [skimmingEnabled])
 
   const currentWindow = useCallback((): { startMs: number; endMs: number } => {
     return computeWindow({
@@ -99,9 +111,44 @@ export function WaveformView() {
     setCenterMs((startMs + endMs) / 2)
   }, [currentWindow])
 
+  /**
+   * Hovering shows where the pointer is and previews the audio there, without
+   * touching the playhead. Silent while the track is playing so the two do not
+   * talk over each other.
+   */
+  function skimAt({ timeMs }: { timeMs: number }): void {
+    if (!useSettingsStore.getState().skimming) return
+    setSkimmerMs({ timeMs })
+
+    if (useAudioStore.getState().isPlaying) {
+      stopSkimming()
+      return
+    }
+
+    if (!skimming.current) {
+      skimming.current = true
+      beginScrub({ timeMs })
+      return
+    }
+    scrubTo({ timeMs })
+  }
+
+  function stopSkimming(): void {
+    if (!skimming.current) return
+    skimming.current = false
+    endScrub()
+  }
+
+  function clearSkimmer(): void {
+    stopSkimming()
+    setSkimmerMs({ timeMs: null })
+  }
+
   function handlePointerDown(event: PointerEvent<HTMLDivElement>): void {
     if (durationMs === 0) return
     event.currentTarget.setPointerCapture(event.pointerId)
+    // The playhead itself moves from here on, so the hover marker would only add noise.
+    clearSkimmer()
 
     const { startMs, endMs } = currentWindow()
     const centerBeforeDrag = (startMs + endMs) / 2
@@ -129,7 +176,10 @@ export function WaveformView() {
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>): void {
-    if (drag === null) return
+    if (drag === null) {
+      if (durationMs !== 0) skimAt({ timeMs: Math.max(0, timeAt({ clientX: event.clientX })) })
+      return
+    }
 
     // A press that has not travelled yet is still a click, so playback is left alone.
     if (!hasDragged.current) {
@@ -167,6 +217,7 @@ export function WaveformView() {
     event.currentTarget.releasePointerCapture(event.pointerId)
     hasDragged.current = false
     endScrub()
+    skimming.current = false
     if (drag !== null && drag.kind === 'marker') {
       setLineTime({ index: drag.index, timeMs: drag.timeMs })
     }
@@ -213,10 +264,15 @@ export function WaveformView() {
   function handleOverviewUp(): void {
     overviewScrubbing.current = false
     endScrub()
+    skimming.current = false
   }
 
   function handleOverviewMove(event: PointerEvent<HTMLDivElement>): void {
-    if (durationMs === 0 || event.buttons === 0) return
+    if (durationMs === 0) return
+    if (event.buttons === 0) {
+      skimAt({ timeMs: overviewTime(event) })
+      return
+    }
     // Dragging across the overview is a scrub, so stop the audio the first time it moves.
     if (!overviewScrubbing.current) {
       overviewScrubbing.current = true
@@ -238,7 +294,10 @@ export function WaveformView() {
         onPointerMove={handleOverviewMove}
         onPointerUp={handleOverviewUp}
         onPointerCancel={handleOverviewUp}
-        onPointerLeave={handleOverviewUp}
+        onPointerLeave={() => {
+          handleOverviewUp()
+          clearSkimmer()
+        }}
       >
         <WaveformCanvas
           peaks={peaks}
@@ -262,6 +321,7 @@ export function WaveformView() {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        onPointerLeave={clearSkimmer}
         onWheel={handleWheel}
       >
         <WaveformCanvas

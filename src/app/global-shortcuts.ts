@@ -4,6 +4,7 @@ import { selectionRange, useEditorStore } from '../features/editor/editor-store.
 import { findNextUntagged } from '../features/editor/line-operations.ts'
 import { tagCursorLine } from '../features/editor/tag-line.ts'
 import { downloadLrc } from '../features/io/export-lrc.ts'
+import { useSettingsStore } from '../features/settings/settings-store.ts'
 import { NUDGE_STEP_MS, SEEK_STEP_MS } from '../shared/keyboard/shortcut-map.ts'
 
 /**
@@ -117,6 +118,13 @@ function handleKeyDown(event: KeyboardEvent): void {
     case 'BracketRight': {
       event.preventDefault()
       editor.nudgeSelection({ deltaMs: nudgeStep({ event }) })
+      return
+    }
+
+    case 'KeyS': {
+      event.preventDefault()
+      const { skimming, update } = useSettingsStore.getState()
+      update({ patch: { skimming: !skimming } })
       return
     }
 

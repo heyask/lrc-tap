@@ -13,6 +13,7 @@ const SHORTCUTS = [
     action: `Nudge 10ms (⇧ 100ms · ${ALT_LABEL} 500ms)`,
   },
   { keys: SHORTCUT.nextUntagged, action: 'Next untagged line' },
+  { keys: SHORTCUT.toggleSkimming, action: 'Skim on hover' },
   { keys: SHORTCUT.stop, action: 'Stop' },
   { keys: SHORTCUT.undo, action: 'Undo' },
   { keys: SHORTCUT.download, action: 'Download .lrc' },

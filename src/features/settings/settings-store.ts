@@ -16,6 +16,8 @@ export type Settings = {
   showSubtitleStrip: boolean
   /** Play the audio under the pointer while dragging on the waveform. */
   scrubAudio: boolean
+  /** Preview the position under the pointer while merely hovering the waveform. */
+  skimming: boolean
 }
 
 const DEFAULTS: Settings = {
@@ -24,6 +26,7 @@ const DEFAULTS: Settings = {
   followPlayhead: true,
   showSubtitleStrip: true,
   scrubAudio: true,
+  skimming: true,
 }
 
 /** One entry per setting: the guard that decides whether a stored value is usable. */
@@ -33,6 +36,7 @@ const VALIDATORS: { [Key in keyof Settings]: (value: unknown) => value is Settin
   followPlayhead: isBoolean,
   showSubtitleStrip: isBoolean,
   scrubAudio: isBoolean,
+  skimming: isBoolean,
 }
 
 type SettingsState = Settings & {
