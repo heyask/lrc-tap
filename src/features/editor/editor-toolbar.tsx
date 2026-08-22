@@ -104,7 +104,7 @@ export function EditorToolbar() {
           disabled={lines.length === 0 || !isReady}
           shortcut={SHORTCUT.tagLine}
           title={`Stamp the playhead onto this line and move on (${SHORTCUT.tagLine}). Works while paused.`}
-          onClick={tagCursorLine}
+          onClick={(event) => tagCursorLine({ atPerfMs: event.timeStamp })}
         >
           Tag line
         </Button>

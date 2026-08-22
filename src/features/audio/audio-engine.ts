@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { extrapolateMediaMs } from './media-clock.ts'
 
 type TimeListener = (timeMs: number) => void
 
@@ -30,6 +31,8 @@ let stopAtMs: number | null = null
 /** Position to jump to as soon as the browser knows the track's duration. */
 let startAtMs = 0
 let frame = 0
+/** Last moment the media clock actually moved, paired with a performance clock reading. */
+let sample: { mediaMs: number; perfMs: number } | null = null
 
 element.addEventListener('loadedmetadata', () => {
   const durationMs = Number.isFinite(element.duration) ? element.duration * 1000 : 0
@@ -72,6 +75,13 @@ element.addEventListener('seeked', emit)
 
 function emit(): void {
   const timeMs = element.currentTime * 1000
+
+  // Anchor only when the clock has really moved. It does not tick every frame,
+  // so re-stamping on each one would make the position look stalled.
+  if (sample === null || sample.mediaMs !== timeMs) {
+    sample = { mediaMs: timeMs, perfMs: performance.now() }
+  }
+
   for (const listener of listeners) listener(timeMs)
 }
 
@@ -107,6 +117,7 @@ export const audioEngine = {
     objectUrl = URL.createObjectURL(blob)
     stopAtMs = null
     startAtMs = Math.max(0, resumeMs)
+    sample = null
     useAudioStore.setState({ isReady: false, isPlaying: false, durationMs: 0, error: null })
     element.src = objectUrl
     element.load()
@@ -154,6 +165,23 @@ export const audioEngine = {
 
   getTimeMs(): number {
     return element.currentTime * 1000
+  },
+
+  /**
+   * Position at the instant something happened, given that event's `timeStamp`.
+   * Reading `currentTime` inside a handler is late twice over: the media clock
+   * ticks in steps, and a keypress can wait behind a frame of canvas work.
+   */
+  getTimeAtMs({ perfMs }: { perfMs: number }): number {
+    if (element.paused || sample === null) return element.currentTime * 1000
+
+    return extrapolateMediaMs({
+      sampleMediaMs: sample.mediaMs,
+      samplePerfMs: sample.perfMs,
+      atPerfMs: perfMs,
+      playbackRate: element.playbackRate,
+      durationMs: useAudioStore.getState().durationMs,
+    })
   },
 
   subscribeTime(listener: TimeListener): () => void {

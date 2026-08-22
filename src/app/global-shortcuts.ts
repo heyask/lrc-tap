@@ -67,7 +67,7 @@ function handleKeyDown(event: KeyboardEvent): void {
 
     case 'Enter': {
       event.preventDefault()
-      tagCursorLine()
+      tagCursorLine({ atPerfMs: event.timeStamp })
       return
     }
 
