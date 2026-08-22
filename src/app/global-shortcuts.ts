@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { audioEngine } from '../features/audio/audio-engine.ts'
+import { togglePlayback } from '../features/audio/transport.ts'
 import { selectionRange, useEditorStore } from '../features/editor/editor-store.ts'
 import { findNextUntagged } from '../features/editor/line-operations.ts'
 import { tagCursorLine } from '../features/editor/tag-line.ts'
@@ -60,7 +61,7 @@ function handleKeyDown(event: KeyboardEvent): void {
   switch (event.code) {
     case 'Space': {
       event.preventDefault()
-      audioEngine.toggle()
+      togglePlayback()
       return
     }
 

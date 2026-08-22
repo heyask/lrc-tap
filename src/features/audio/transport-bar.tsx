@@ -2,6 +2,7 @@ import { SEEK_STEP_MS, SHORTCUT } from '../../shared/keyboard/shortcut-map.ts'
 import { formatClock } from '../../shared/time/format-timestamp.ts'
 import { Button } from '../../shared/ui/button.tsx'
 import { audioEngine, useAudioStore } from './audio-engine.ts'
+import { togglePlayback } from './transport.ts'
 import { useCurrentTimeMs } from './use-current-time.ts'
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5]
@@ -18,7 +19,7 @@ export function TransportBar() {
     <div className="flex items-center gap-3 border-b border-zinc-800 bg-zinc-900 px-3 py-2">
       <Button
         variant="primary"
-        onClick={() => audioEngine.toggle()}
+        onClick={togglePlayback}
         disabled={!isReady}
         shortcut={SHORTCUT.playPause}
         aria-label={isPlaying ? 'Pause' : 'Play'}

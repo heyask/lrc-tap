@@ -26,7 +26,7 @@ or press `⌥↑` / `⌥↓`; the timestamps travel with the words.
 
 | Key | Action |
 | --- | --- |
-| `Space` | Play / pause |
+| `Space` | Play / pause — starts at the skimmer when hovering the waveform |
 | `Enter` | Tag the current line and move to the next — works while paused |
 | `Backspace` | Undo the last tag, clear it and rewind to it |
 | `↑` `↓` | Move the line cursor (`⇧` extends the selection) |
@@ -44,8 +44,9 @@ Buttons carry their own key: the main ones print it, the rest show it on hover.
 
 On the waveform: just hovering skims. A dashed marker follows the pointer and,
 while the track is paused, plays the audio under it — so you can find where a
-line starts without clicking anything. The playhead stays put until you click.
-`S` turns skimming off.
+line starts without clicking anything. The playhead stays put until you click,
+and pressing `Space` while skimming starts playback from the marker rather than
+from the playhead. `S` turns skimming off.
 
 Dragging pauses playback and scrubs instead: you hear only as much as you drag,
 so a line can be placed by ear. Drag a marker to move that line, `⌥`-drag to

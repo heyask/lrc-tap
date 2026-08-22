@@ -118,11 +118,6 @@ export const audioEngine = {
     element.pause()
   },
 
-  toggle(): void {
-    if (element.paused) audioEngine.play()
-    else audioEngine.pause()
-  },
-
   /** Plays from a point and stops automatically at `untilMs` — used to audition one line. */
   playSegment({ fromMs, untilMs }: { fromMs: number; untilMs: number | null }): void {
     audioEngine.seek({ timeMs: fromMs })

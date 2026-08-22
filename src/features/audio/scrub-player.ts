@@ -43,9 +43,17 @@ export function beginScrub({ timeMs }: { timeMs: number }): void {
   nextStartAt = context.currentTime
 }
 
-/** Plays as much audio as the pointer has just travelled over. */
+/**
+ * Plays as much audio as the pointer has just travelled over. Opens a run by
+ * itself if one is not already going, so hovering can start making sound
+ * without the caller tracking whether a run is live.
+ */
 export function scrubTo({ timeMs }: { timeMs: number }): void {
-  if (context === null || buffer === null || lastGrainEndMs === null) return
+  if (context === null || lastGrainEndMs === null) {
+    beginScrub({ timeMs })
+    return
+  }
+  if (buffer === null) return
 
   const grain = planGrain({ fromMs: lastGrainEndMs, toMs: timeMs })
   if (grain === null) return

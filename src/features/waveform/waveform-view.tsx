@@ -42,8 +42,6 @@ export function WaveformView() {
   const [drag, setDrag] = useState<Drag | null>(null)
   const detailRef = useRef<HTMLDivElement>(null)
   const overviewScrubbing = useRef(false)
-  /** True once a hover run has opened the scrub player. */
-  const skimming = useRef(false)
   /** Whether the current press has travelled far enough to be a drag. Not rendered. */
   const hasDragged = useRef(false)
 
@@ -52,7 +50,6 @@ export function WaveformView() {
   // Turning skimming off from the key or the checkbox should drop any line already drawn.
   useEffect(() => {
     if (skimmingEnabled) return
-    skimming.current = false
     endScrub()
     setSkimmerMs({ timeMs: null })
   }, [skimmingEnabled])
@@ -120,27 +117,16 @@ export function WaveformView() {
     if (!useSettingsStore.getState().skimming) return
     setSkimmerMs({ timeMs })
 
+    // While the track is playing the two would talk over each other.
     if (useAudioStore.getState().isPlaying) {
-      stopSkimming()
-      return
-    }
-
-    if (!skimming.current) {
-      skimming.current = true
-      beginScrub({ timeMs })
+      endScrub()
       return
     }
     scrubTo({ timeMs })
   }
 
-  function stopSkimming(): void {
-    if (!skimming.current) return
-    skimming.current = false
-    endScrub()
-  }
-
   function clearSkimmer(): void {
-    stopSkimming()
+    endScrub()
     setSkimmerMs({ timeMs: null })
   }
 
@@ -217,7 +203,6 @@ export function WaveformView() {
     event.currentTarget.releasePointerCapture(event.pointerId)
     hasDragged.current = false
     endScrub()
-    skimming.current = false
     if (drag !== null && drag.kind === 'marker') {
       setLineTime({ index: drag.index, timeMs: drag.timeMs })
     }
@@ -264,7 +249,6 @@ export function WaveformView() {
   function handleOverviewUp(): void {
     overviewScrubbing.current = false
     endScrub()
-    skimming.current = false
   }
 
   function handleOverviewMove(event: PointerEvent<HTMLDivElement>): void {
