@@ -12,7 +12,7 @@ export type Peaks = {
   durationMs: number
 }
 
-export type DecodedAudio = {
+type DecodedAudio = {
   peaks: Peaks
   /** Mono copy used for scrubbing. Null when the browser cannot resample. */
   scrubBuffer: AudioBuffer | null

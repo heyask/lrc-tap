@@ -6,12 +6,12 @@ import { loadPeaks } from '../waveform/peaks-store.ts'
 
 const LYRICS_EXTENSIONS = ['.lrc', '.txt', '.text']
 
-export function isLyricsFile({ file }: { file: File }): boolean {
+function isLyricsFile({ file }: { file: File }): boolean {
   const name = file.name.toLowerCase()
   return LYRICS_EXTENSIONS.some((extension) => name.endsWith(extension))
 }
 
-export function isAudioFile({ file }: { file: File }): boolean {
+function isAudioFile({ file }: { file: File }): boolean {
   return file.type.startsWith('audio/') || file.type.startsWith('video/')
 }
 

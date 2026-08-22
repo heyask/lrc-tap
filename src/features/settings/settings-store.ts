@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 const STORAGE_KEY = 'lrc-tap:settings'
 
-export type Settings = {
+type Settings = {
   /**
    * Subtracted from the playhead when tapping, to cancel out human reaction
    * delay. Positive values move tags earlier.

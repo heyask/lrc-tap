@@ -2,7 +2,7 @@ const STORAGE_KEY = 'lrc-tap:view'
 /** The playhead ticks every frame, so writes are throttled rather than debounced. */
 const WRITE_INTERVAL_MS = 1000
 
-export type ViewState = {
+type ViewState = {
   playheadMs: number
   /** Width of the waveform's detail view. */
   spanMs: number

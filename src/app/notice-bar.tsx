@@ -1,6 +1,6 @@
 import { useSessionStore } from '../features/persistence/session-storage.ts'
+import { useNoticeStore } from '../shared/notice/notice-store.ts'
 import { cx } from '../shared/ui/cx.ts'
-import { useNoticeStore } from './notice-store.ts'
 
 export function NoticeBar() {
   const message = useNoticeStore((state) => state.message)

@@ -4,7 +4,7 @@ import { createLyricLine, isKnownMetadataTag, LrcMetadata, LyricLine } from './l
 const TIMESTAMP_PREFIX = /^\[(\d{1,3}:[0-5]?\d(?:[.:]\d{1,3})?)\]/
 const METADATA_PREFIX = /^\[([a-zA-Z]+):(.*)\]$/
 
-export type ParsedLrc = {
+type ParsedLrc = {
   lines: LyricLine[]
   metadata: LrcMetadata
   /** True when at least one line carried a timestamp — i.e. the input was an .lrc, not plain text. */

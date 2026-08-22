@@ -1,5 +1,5 @@
-import { useNoticeStore } from '../../app/notice-store.ts'
 import { SHORTCUT } from '../../shared/keyboard/shortcut-map.ts'
+import { useNoticeStore } from '../../shared/notice/notice-store.ts'
 import { Button } from '../../shared/ui/button.tsx'
 import { Panel } from '../../shared/ui/panel.tsx'
 import { useEditorStore } from '../editor/editor-store.ts'

@@ -18,7 +18,7 @@ export const NUDGE_STEP_MS = {
 
 const isApplePlatform = /Mac|iPhone|iPad/.test(navigator.userAgent)
 
-export const MOD_LABEL = isApplePlatform ? '⌘' : 'Ctrl'
+const MOD_LABEL = isApplePlatform ? '⌘' : 'Ctrl'
 export const ALT_LABEL = isApplePlatform ? '⌥' : 'Alt'
 const SHIFT_LABEL = '⇧'
 

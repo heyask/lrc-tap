@@ -9,7 +9,7 @@ const MIN_GRAIN_MS = 180
 /** Caps one slice so a flung drag does not leave a long tail playing. */
 const MAX_GRAIN_MS = 400
 
-export type Grain = {
+type Grain = {
   startMs: number
   durationMs: number
 }

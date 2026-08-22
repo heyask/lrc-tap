@@ -23,10 +23,6 @@ export function setScrubBuffer({ buffer: next }: { buffer: AudioBuffer | null })
   lastGrainEndMs = null
 }
 
-export function isScrubAvailable(): boolean {
-  return buffer !== null
-}
-
 /**
  * Opens a scrub run. Called from a pointer gesture, which is what lets the
  * audio context start without tripping autoplay rules.

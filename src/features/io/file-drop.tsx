@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNoticeStore } from '../../app/notice-store.ts'
+import { useNoticeStore } from '../../shared/notice/notice-store.ts'
 import { adoptDroppedFiles } from './load-files.ts'
 
 /**
