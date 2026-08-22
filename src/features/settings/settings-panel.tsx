@@ -4,6 +4,7 @@ import { useSettingsStore } from './settings-store.ts'
 export function SettingsPanel() {
   const tapOffsetMs = useSettingsStore((state) => state.tapOffsetMs)
   const auditionOnSelect = useSettingsStore((state) => state.auditionOnSelect)
+  const scrubAudio = useSettingsStore((state) => state.scrubAudio)
   const update = useSettingsStore((state) => state.update)
 
   return (
@@ -35,6 +36,16 @@ export function SettingsPanel() {
           className="accent-teal-400"
         />
         Play the line when I click it
+      </label>
+
+      <label className="flex items-center gap-2 py-1 text-sm text-zinc-300">
+        <input
+          type="checkbox"
+          checked={scrubAudio}
+          onChange={(event) => update({ patch: { scrubAudio: event.target.checked } })}
+          className="accent-teal-400"
+        />
+        Hear the audio while dragging
       </label>
     </Panel>
   )

@@ -1,5 +1,7 @@
 /** Buckets per second of audio. 200 keeps a 5-minute track under half a megabyte. */
 const BUCKETS_PER_SECOND = 200
+/** Mono at this rate is clear enough to place a lyric by ear, at ~25MB per 5 minutes. */
+const SCRUB_SAMPLE_RATE = 22_050
 
 export type Peaks = {
   /** Most negative sample in each bucket, in -1..0. */
@@ -10,17 +12,24 @@ export type Peaks = {
   durationMs: number
 }
 
+export type DecodedAudio = {
+  peaks: Peaks
+  /** Mono copy used for scrubbing. Null when the browser cannot resample. */
+  scrubBuffer: AudioBuffer | null
+}
+
 /**
- * Decodes audio and reduces it to per-bucket min/max envelopes for the waveform.
- * Pass an AbortSignal so a superseded file cannot overwrite a newer waveform.
+ * Decodes audio once and derives both of the things the editor needs from it:
+ * the waveform envelope, and a light mono copy to play while scrubbing. Pass an
+ * AbortSignal so a superseded file cannot overwrite newer results.
  */
-export async function decodePeaks({
+export async function decodeAudio({
   blob,
   signal,
 }: {
   blob: Blob
   signal: AbortSignal
-}): Promise<Peaks | null> {
+}): Promise<DecodedAudio | null> {
   const arrayBuffer = await blob.arrayBuffer()
   if (signal.aborted) return null
 
@@ -55,10 +64,36 @@ export async function decodePeaks({
     max[bucket] = bucketMax
   }
 
+  const scrubBuffer = await renderScrubBuffer({ buffer })
+  if (signal.aborted) return null
+
   return {
-    min,
-    max,
-    bucketsPerSecond: BUCKETS_PER_SECOND,
-    durationMs: buffer.duration * 1000,
+    peaks: {
+      min,
+      max,
+      bucketsPerSecond: BUCKETS_PER_SECOND,
+      durationMs: buffer.duration * 1000,
+    },
+    scrubBuffer,
+  }
+}
+
+/**
+ * Renders a mono, downsampled copy for scrub playback. A single output channel
+ * lets Web Audio's own mixing rules fold stereo down. Some browsers refuse an
+ * arbitrary sample rate — then there is simply no scrub audio, rather than a
+ * substitute that would not sound like the track.
+ */
+async function renderScrubBuffer({ buffer }: { buffer: AudioBuffer }): Promise<AudioBuffer | null> {
+  try {
+    const frames = Math.ceil(buffer.duration * SCRUB_SAMPLE_RATE)
+    const context = new OfflineAudioContext(1, Math.max(1, frames), SCRUB_SAMPLE_RATE)
+    const source = context.createBufferSource()
+    source.buffer = buffer
+    source.connect(context.destination)
+    source.start()
+    return await context.startRendering()
+  } catch {
+    return null
   }
 }

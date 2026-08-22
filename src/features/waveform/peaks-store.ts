@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { decodePeaks, Peaks } from '../audio/decode-peaks.ts'
+import { decodeAudio, Peaks } from '../audio/decode-audio.ts'
+import { setScrubBuffer } from '../audio/scrub-player.ts'
 
 type PeaksState = {
   peaks: Peaks | null
@@ -25,11 +26,17 @@ export async function loadPeaks({ blob }: { blob: Blob }): Promise<void> {
   pending = controller
 
   usePeaksStore.setState({ peaks: null, isDecoding: true, error: null })
+  setScrubBuffer({ buffer: null })
 
   try {
-    const peaks = await decodePeaks({ blob, signal: controller.signal })
+    const decoded = await decodeAudio({ blob, signal: controller.signal })
     if (controller.signal.aborted) return
-    usePeaksStore.setState({ peaks, isDecoding: false, error: null })
+    setScrubBuffer({ buffer: decoded === null ? null : decoded.scrubBuffer })
+    usePeaksStore.setState({
+      peaks: decoded === null ? null : decoded.peaks,
+      isDecoding: false,
+      error: null,
+    })
   } catch {
     if (controller.signal.aborted) return
     usePeaksStore.setState({

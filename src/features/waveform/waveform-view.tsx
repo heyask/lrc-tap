@@ -1,6 +1,7 @@
 import { PointerEvent, useCallback, useRef, useState, WheelEvent } from 'react'
 import { Button } from '../../shared/ui/button.tsx'
 import { audioEngine, useAudioStore } from '../audio/audio-engine.ts'
+import { beginScrub, endScrub, scrubTo } from '../audio/scrub-player.ts'
 import { selectionRange, useEditorStore } from '../editor/editor-store.ts'
 import { useSettingsStore } from '../settings/settings-store.ts'
 import { usePeaksStore } from './peaks-store.ts'
@@ -135,7 +136,10 @@ export function WaveformView() {
       if (Math.abs(event.clientX - drag.originX) < DRAG_THRESHOLD_PX) return
       hasDragged.current = true
       // Panning does not move the playhead, so it has no reason to stop the audio.
-      if (drag.kind !== 'pan') audioEngine.pause()
+      if (drag.kind !== 'pan') {
+        audioEngine.pause()
+        beginScrub({ timeMs: audioEngine.getTimeMs() })
+      }
     }
 
     if (drag.kind === 'pan') {
@@ -148,6 +152,8 @@ export function WaveformView() {
     }
 
     const timeMs = Math.max(0, timeAt({ clientX: event.clientX }))
+    scrubTo({ timeMs })
+
     if (drag.kind === 'marker') {
       setDrag({ ...drag, timeMs })
       audioEngine.seek({ timeMs })
@@ -160,6 +166,7 @@ export function WaveformView() {
   function handlePointerUp(event: PointerEvent<HTMLDivElement>): void {
     event.currentTarget.releasePointerCapture(event.pointerId)
     hasDragged.current = false
+    endScrub()
     if (drag !== null && drag.kind === 'marker') {
       setLineTime({ index: drag.index, timeMs: drag.timeMs })
     }
@@ -187,16 +194,25 @@ export function WaveformView() {
     updateSettings({ patch: { followPlayhead: false } })
   }
 
-  function seekFromOverview(event: PointerEvent<HTMLDivElement>): void {
+  function overviewTime(event: PointerEvent<HTMLDivElement>): number {
     const rect = event.currentTarget.getBoundingClientRect()
-    const ratio = (event.clientX - rect.left) / rect.width
-    audioEngine.seek({ timeMs: ratio * durationMs })
+    return ((event.clientX - rect.left) / rect.width) * durationMs
+  }
+
+  function seekFromOverview(event: PointerEvent<HTMLDivElement>): void {
+    audioEngine.seek({ timeMs: overviewTime(event) })
   }
 
   function handleOverviewDown(event: PointerEvent<HTMLDivElement>): void {
     if (durationMs === 0) return
     overviewScrubbing.current = false
+    endScrub()
     seekFromOverview(event)
+  }
+
+  function handleOverviewUp(): void {
+    overviewScrubbing.current = false
+    endScrub()
   }
 
   function handleOverviewMove(event: PointerEvent<HTMLDivElement>): void {
@@ -205,8 +221,10 @@ export function WaveformView() {
     if (!overviewScrubbing.current) {
       overviewScrubbing.current = true
       audioEngine.pause()
+      beginScrub({ timeMs: audioEngine.getTimeMs() })
     }
     seekFromOverview(event)
+    scrubTo({ timeMs: overviewTime(event) })
   }
 
   const highlightRange =
@@ -218,6 +236,9 @@ export function WaveformView() {
         className="h-10 cursor-pointer border-b border-zinc-900"
         onPointerDown={handleOverviewDown}
         onPointerMove={handleOverviewMove}
+        onPointerUp={handleOverviewUp}
+        onPointerCancel={handleOverviewUp}
+        onPointerLeave={handleOverviewUp}
       >
         <WaveformCanvas
           peaks={peaks}

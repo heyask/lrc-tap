@@ -43,7 +43,9 @@ Buttons carry their own key: the main ones print it, the rest show it on hover.
 
 On the waveform: click anywhere to seek without interrupting playback, drag a
 marker to move that line, `⌥`-drag to pan, `⌃`-scroll to zoom. Dragging pauses
-as soon as it starts so you can hear exactly where you are landing.
+playback and scrubs the audio under the pointer instead — you hear only as much
+as you drag, so you can place a line by ear. Turn it off with "Hear the audio
+while dragging" if you would rather work in silence.
 
 ## Formats
 

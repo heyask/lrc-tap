@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { audioEngine } from '../audio/audio-engine.ts'
-import { Peaks } from '../audio/decode-peaks.ts'
+import { Peaks } from '../audio/decode-audio.ts'
 import { LineRange } from '../editor/line-range.ts'
 import { LyricLine } from '../lrc/lyric-line.ts'
 import { computeWindow } from './waveform-window.ts'
