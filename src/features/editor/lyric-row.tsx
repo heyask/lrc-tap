@@ -1,4 +1,5 @@
 import { memo, useState } from 'react'
+import { NUDGE_STEP_MS, SHORTCUT } from '../../shared/keyboard/shortcut-map.ts'
 import { formatTimestamp } from '../../shared/time/format-timestamp.ts'
 import { parseTimestamp } from '../../shared/time/parse-timestamp.ts'
 import { cx } from '../../shared/ui/cx.ts'
@@ -8,8 +9,6 @@ import { LyricLine } from '../lrc/lyric-line.ts'
 import { useSettingsStore } from '../settings/settings-store.ts'
 import { useEditorStore } from './editor-store.ts'
 import { findNextTime } from './line-operations.ts'
-
-const NUDGE_MS = 100
 
 export type LyricRowProps = {
   line: LyricLine
@@ -87,6 +86,9 @@ export const LyricRow = memo(function LyricRow({
       onDoubleClick={() => setTextDraft(line.text)}
       className={cx(
         'group flex items-center gap-2 border-l-2 py-1 pr-2 pl-1 text-sm',
+        // Not in the tab order, so its only focus is from a click — the cursor
+        // highlight already shows which line is current.
+        'focus:outline-none',
         isCursor ? 'bg-zinc-800' : isSelected ? 'bg-teal-500/10' : 'hover:bg-zinc-900',
         hasOrderingIssue
           ? 'border-l-rose-500'
@@ -163,8 +165,20 @@ export const LyricRow = memo(function LyricRow({
       )}
 
       <span className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
-        <NudgeButton index={index} line={line} deltaMs={-NUDGE_MS} label="−0.1" />
-        <NudgeButton index={index} line={line} deltaMs={NUDGE_MS} label="+0.1" />
+        <NudgeButton
+          index={index}
+          line={line}
+          deltaMs={-NUDGE_STEP_MS.medium}
+          label="−0.1"
+          shortcut={SHORTCUT.nudgeBackMedium}
+        />
+        <NudgeButton
+          index={index}
+          line={line}
+          deltaMs={NUDGE_STEP_MS.medium}
+          label="+0.1"
+          shortcut={SHORTCUT.nudgeForwardMedium}
+        />
       </span>
     </div>
   )
@@ -175,11 +189,13 @@ function NudgeButton({
   line,
   deltaMs,
   label,
+  shortcut,
 }: {
   index: number
   line: LyricLine
   deltaMs: number
   label: string
+  shortcut: string
 }) {
   const setLineTime = useEditorStore((state) => state.setLineTime)
 
@@ -187,6 +203,8 @@ function NudgeButton({
     <button
       type="button"
       disabled={line.timeMs === null}
+      title={`Move this line by ${label}s (${shortcut})`}
+      aria-keyshortcuts={shortcut}
       onClick={(event) => {
         event.stopPropagation()
         if (line.timeMs === null) return

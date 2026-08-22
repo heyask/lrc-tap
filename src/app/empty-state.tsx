@@ -11,10 +11,11 @@ export function EmptyState() {
 
       <ol className="w-full max-w-md space-y-2 text-left text-sm text-zinc-400">
         <Step number={1} text="Load the audio and paste the lyrics." />
-        <Step number={2} text="Press Space to start playing, then tap Space on every line." />
-        <Step number={3} text="Missed one? Backspace steps back and clears it." />
-        <Step number={4} text="Fix a line with [ and ], or drag its marker on the waveform." />
-        <Step number={5} text="Select a range and hit Re-sync to redo just that part." />
+        <Step number={2} text="Press Space to play, then Enter on every line as it is sung." />
+        <Step number={3} text="Missed one? Backspace steps back, clears it and rewinds." />
+        <Step number={4} text="Enter works while paused too — park the playhead and tag." />
+        <Step number={5} text="Fix a line with [ and ] or by dragging its waveform marker." />
+        <Step number={6} text="Select a range and hit Re-sync to redo just that part." />
       </ol>
     </div>
   )

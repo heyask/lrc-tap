@@ -1,15 +1,20 @@
+import { ALT_LABEL, SHORTCUT } from '../shared/keyboard/shortcut-map.ts'
+
 const SHORTCUTS = [
-  { keys: 'Space', action: 'Play, then tap each line' },
-  { keys: '⌫', action: 'Undo last tap and jump back' },
-  { keys: '↑ ↓', action: 'Move line cursor' },
-  { keys: '⇧ ↑ ↓', action: 'Select a range' },
-  { keys: '← →', action: 'Seek 3s (⇧ 1s · ⌥ 10s)' },
-  { keys: '[ ]', action: 'Nudge 10ms (⇧ 100ms)' },
-  { keys: 'Tab', action: 'Next untagged line' },
-  { keys: 'P', action: 'Play / pause' },
-  { keys: 'Esc', action: 'Stop' },
-  { keys: '⌘Z', action: 'Undo' },
-  { keys: '⌘S', action: 'Download .lrc' },
+  { keys: SHORTCUT.playPause, action: 'Play / pause' },
+  { keys: SHORTCUT.tagLine, action: 'Tag this line and move on' },
+  { keys: SHORTCUT.stepBack, action: 'Undo last tag and jump back' },
+  { keys: SHORTCUT.moveCursor, action: 'Move line cursor' },
+  { keys: SHORTCUT.extendSelection, action: 'Select a range' },
+  { keys: SHORTCUT.seek, action: `Seek 3s (⇧ 1s · ${ALT_LABEL} 10s)` },
+  {
+    keys: `${SHORTCUT.nudgeBack} ${SHORTCUT.nudgeForward}`,
+    action: `Nudge 10ms (⇧ 100ms · ${ALT_LABEL} 500ms)`,
+  },
+  { keys: SHORTCUT.nextUntagged, action: 'Next untagged line' },
+  { keys: SHORTCUT.stop, action: 'Stop' },
+  { keys: SHORTCUT.undo, action: 'Undo' },
+  { keys: SHORTCUT.download, action: 'Download .lrc' },
 ]
 
 export function ShortcutBar() {

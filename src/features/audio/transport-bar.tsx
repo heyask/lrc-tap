@@ -1,10 +1,10 @@
+import { SEEK_STEP_MS, SHORTCUT } from '../../shared/keyboard/shortcut-map.ts'
 import { formatClock } from '../../shared/time/format-timestamp.ts'
 import { Button } from '../../shared/ui/button.tsx'
 import { audioEngine, useAudioStore } from './audio-engine.ts'
 import { useCurrentTimeMs } from './use-current-time.ts'
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5]
-const SEEK_STEP_MS = 3000
 
 export function TransportBar() {
   const isReady = useAudioStore((state) => state.isReady)
@@ -20,8 +20,9 @@ export function TransportBar() {
         variant="primary"
         onClick={() => audioEngine.toggle()}
         disabled={!isReady}
+        shortcut={SHORTCUT.playPause}
         aria-label={isPlaying ? 'Pause' : 'Play'}
-        className="w-20"
+        className="w-28"
       >
         {isPlaying ? 'Pause' : 'Play'}
       </Button>
@@ -30,7 +31,8 @@ export function TransportBar() {
         size="sm"
         variant="ghost"
         disabled={!isReady}
-        onClick={() => audioEngine.nudge({ deltaMs: -SEEK_STEP_MS })}
+        shortcut={SHORTCUT.seekBack}
+        onClick={() => audioEngine.nudge({ deltaMs: -SEEK_STEP_MS.normal })}
       >
         −3s
       </Button>
@@ -38,7 +40,8 @@ export function TransportBar() {
         size="sm"
         variant="ghost"
         disabled={!isReady}
-        onClick={() => audioEngine.nudge({ deltaMs: SEEK_STEP_MS })}
+        shortcut={SHORTCUT.seekForward}
+        onClick={() => audioEngine.nudge({ deltaMs: SEEK_STEP_MS.normal })}
       >
         +3s
       </Button>

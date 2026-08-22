@@ -6,8 +6,9 @@ Nothing is uploaded — the audio never leaves your machine.
 
 ## The three things it optimises for
 
-**First pass.** Press `Space` to start playing, then hit `Space` on every line.
-The cursor advances on its own and skips blank spacers.
+**First pass.** `Space` plays, `Enter` tags. Hit `Enter` on every line as it is
+sung — the cursor advances on its own and skips blank spacers. `Enter` works
+while paused too, so you can park the playhead and stamp a line by hand.
 
 **Missed one.** `Backspace` steps the cursor back, clears that timestamp and
 jumps playback to where it was, so you can retake it immediately.
@@ -20,21 +21,23 @@ just that stretch — every line outside the range is left exactly as it was.
 
 | Key | Action |
 | --- | --- |
-| `Space` | Play; while playing, tag the current line and advance |
-| `Enter` | Tag the current line without starting playback |
-| `Backspace` | Undo the last tag and jump back to it |
+| `Space` | Play / pause |
+| `Enter` | Tag the current line and move to the next — works while paused |
+| `Backspace` | Undo the last tag, clear it and rewind to it |
 | `↑` `↓` | Move the line cursor (`⇧` extends the selection) |
 | `←` `→` | Seek 3s (`⇧` 1s, `⌥` 10s) |
-| `[` `]` | Nudge the selection by 10ms (`⇧` 100ms) |
+| `[` `]` | Nudge the selection by 10ms (`⇧` 100ms, `⌥` 500ms) |
 | `Tab` | Jump to the next line without a timestamp |
-| `P` / `K` | Play / pause |
 | `Esc` | Stop, and leave re-sync mode |
 | `⌘Z` / `⌘⇧Z` | Undo / redo |
 | `⌘S` | Download the `.lrc` |
 | `⌘A` | Select every line |
 
-On the waveform: drag a marker to move that line, `⌥`-drag to pan,
-`⌃`-scroll to zoom, click anywhere to seek.
+Buttons carry their own key: the main ones print it, the rest show it on hover.
+
+On the waveform: click anywhere to seek without interrupting playback, drag a
+marker to move that line, `⌥`-drag to pan, `⌃`-scroll to zoom. Dragging pauses
+as soon as it starts so you can hear exactly where you are landing.
 
 ## Formats
 

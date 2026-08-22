@@ -8,13 +8,15 @@ import { WaveformCanvas } from './waveform-canvas.tsx'
 import { computeWindow } from './waveform-window.ts'
 
 const MARKER_HIT_PX = 6
+/** Pointer travel that turns a click into a drag. Below it, a press is a plain seek. */
+const DRAG_THRESHOLD_PX = 3
 const MIN_SPAN_MS = 1500
 const MAX_SPAN_MS = 600_000
 
 type Drag =
-  | { kind: 'marker'; index: number; timeMs: number }
-  | { kind: 'scrub' }
-  | { kind: 'pan'; originX: number; originCenterMs: number }
+  | { kind: 'marker'; index: number; timeMs: number; originX: number }
+  | { kind: 'scrub'; originX: number }
+  | { kind: 'pan'; originCenterMs: number; originX: number }
 
 export function WaveformView() {
   const peaks = usePeaksStore((state) => state.peaks)
@@ -36,6 +38,9 @@ export function WaveformView() {
   const [centerMs, setCenterMs] = useState(0)
   const [drag, setDrag] = useState<Drag | null>(null)
   const detailRef = useRef<HTMLDivElement>(null)
+  const overviewScrubbing = useRef(false)
+  /** Whether the current press has travelled far enough to be a drag. Not rendered. */
+  const hasDragged = useRef(false)
 
   const follow = followSetting && drag === null
 
@@ -101,8 +106,11 @@ export function WaveformView() {
     const centerBeforeDrag = (startMs + endMs) / 2
     setCenterMs(centerBeforeDrag)
 
+    hasDragged.current = false
+    const base = { originX: event.clientX }
+
     if (event.button === 1 || event.altKey) {
-      setDrag({ kind: 'pan', originX: event.clientX, originCenterMs: centerBeforeDrag })
+      setDrag({ kind: 'pan', originCenterMs: centerBeforeDrag, ...base })
       return
     }
 
@@ -110,17 +118,25 @@ export function WaveformView() {
     if (index !== null) {
       const timeMs = timeAt({ clientX: event.clientX })
       moveCursor({ index, extendSelection: false })
-      setDrag({ kind: 'marker', index, timeMs })
+      setDrag({ kind: 'marker', index, timeMs, ...base })
       audioEngine.seek({ timeMs })
       return
     }
 
-    setDrag({ kind: 'scrub' })
+    setDrag({ kind: 'scrub', ...base })
     audioEngine.seek({ timeMs: timeAt({ clientX: event.clientX }) })
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>): void {
     if (drag === null) return
+
+    // A press that has not travelled yet is still a click, so playback is left alone.
+    if (!hasDragged.current) {
+      if (Math.abs(event.clientX - drag.originX) < DRAG_THRESHOLD_PX) return
+      hasDragged.current = true
+      // Panning does not move the playhead, so it has no reason to stop the audio.
+      if (drag.kind !== 'pan') audioEngine.pause()
+    }
 
     if (drag.kind === 'pan') {
       const element = detailRef.current
@@ -143,6 +159,7 @@ export function WaveformView() {
 
   function handlePointerUp(event: PointerEvent<HTMLDivElement>): void {
     event.currentTarget.releasePointerCapture(event.pointerId)
+    hasDragged.current = false
     if (drag !== null && drag.kind === 'marker') {
       setLineTime({ index: drag.index, timeMs: drag.timeMs })
     }
@@ -170,11 +187,26 @@ export function WaveformView() {
     updateSettings({ patch: { followPlayhead: false } })
   }
 
-  function handleOverviewPointer(event: PointerEvent<HTMLDivElement>): void {
-    if (durationMs === 0 || event.buttons === 0) return
+  function seekFromOverview(event: PointerEvent<HTMLDivElement>): void {
     const rect = event.currentTarget.getBoundingClientRect()
     const ratio = (event.clientX - rect.left) / rect.width
     audioEngine.seek({ timeMs: ratio * durationMs })
+  }
+
+  function handleOverviewDown(event: PointerEvent<HTMLDivElement>): void {
+    if (durationMs === 0) return
+    overviewScrubbing.current = false
+    seekFromOverview(event)
+  }
+
+  function handleOverviewMove(event: PointerEvent<HTMLDivElement>): void {
+    if (durationMs === 0 || event.buttons === 0) return
+    // Dragging across the overview is a scrub, so stop the audio the first time it moves.
+    if (!overviewScrubbing.current) {
+      overviewScrubbing.current = true
+      audioEngine.pause()
+    }
+    seekFromOverview(event)
   }
 
   const highlightRange =
@@ -184,8 +216,8 @@ export function WaveformView() {
     <div className="border-t border-zinc-800 bg-zinc-950">
       <div
         className="h-10 cursor-pointer border-b border-zinc-900"
-        onPointerDown={handleOverviewPointer}
-        onPointerMove={handleOverviewPointer}
+        onPointerDown={handleOverviewDown}
+        onPointerMove={handleOverviewMove}
       >
         <WaveformCanvas
           peaks={peaks}
@@ -240,6 +272,7 @@ export function WaveformView() {
         <Button
           size="sm"
           variant="ghost"
+          title="Show more of the track (Ctrl-scroll on the waveform)"
           onClick={() => setSpanMs(clampSpan({ spanMs: spanMs * 1.6 }))}
         >
           Zoom out
@@ -247,6 +280,7 @@ export function WaveformView() {
         <Button
           size="sm"
           variant="ghost"
+          title="Show less of the track (Ctrl-scroll on the waveform)"
           onClick={() => setSpanMs(clampSpan({ spanMs: spanMs / 1.6 }))}
         >
           Zoom in
@@ -254,6 +288,7 @@ export function WaveformView() {
         <Button
           size="sm"
           variant={followSetting ? 'primary' : 'ghost'}
+          title="Keep the waveform and lyrics centred on the playhead"
           onClick={() => {
             if (followSetting) anchorCenter()
             updateSettings({ patch: { followPlayhead: !followSetting } })

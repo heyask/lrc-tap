@@ -82,7 +82,9 @@ export function FilesPanel() {
               onClick={() => {
                 adoptLyricsText({ source: pasteDraft })
                 setPasteDraft(null)
-                showNotice({ message: 'Lyrics loaded. Press Space to start tagging.' })
+                showNotice({
+                  message: 'Lyrics loaded. Press Space to play, then Enter to tag each line.',
+                })
               }}
             >
               Use these lyrics

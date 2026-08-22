@@ -1,4 +1,5 @@
 import { useNoticeStore } from '../../app/notice-store.ts'
+import { SHORTCUT } from '../../shared/keyboard/shortcut-map.ts'
 import { Button } from '../../shared/ui/button.tsx'
 import { Panel } from '../../shared/ui/panel.tsx'
 import { useEditorStore } from '../editor/editor-store.ts'
@@ -21,6 +22,7 @@ export function ExportPanel() {
           variant="primary"
           size="sm"
           disabled={lines.length === 0}
+          shortcut={SHORTCUT.download}
           onClick={() => downloadLrc({ lines, metadata, audioFileName })}
         >
           Download .lrc

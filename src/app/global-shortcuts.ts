@@ -1,15 +1,10 @@
 import { useEffect } from 'react'
-import { audioEngine, useAudioStore } from '../features/audio/audio-engine.ts'
+import { audioEngine } from '../features/audio/audio-engine.ts'
 import { useEditorStore } from '../features/editor/editor-store.ts'
 import { findNextUntagged } from '../features/editor/line-operations.ts'
+import { tagCursorLine } from '../features/editor/tag-line.ts'
 import { downloadLrc } from '../features/io/export-lrc.ts'
-import { useSettingsStore } from '../features/settings/settings-store.ts'
-
-const SEEK_STEP_MS = 3000
-const SEEK_STEP_FINE_MS = 1000
-const SEEK_STEP_COARSE_MS = 10_000
-const NUDGE_FINE_MS = 10
-const NUDGE_COARSE_MS = 100
+import { NUDGE_STEP_MS, SEEK_STEP_MS } from '../shared/keyboard/shortcut-map.ts'
 
 /**
  * The app's single keyboard map. Keys are matched on `event.code` so the layout
@@ -64,17 +59,13 @@ function handleKeyDown(event: KeyboardEvent): void {
   switch (event.code) {
     case 'Space': {
       event.preventDefault()
-      if (!useAudioStore.getState().isPlaying) {
-        audioEngine.play()
-        return
-      }
-      tapCurrentLine()
+      audioEngine.toggle()
       return
     }
 
     case 'Enter': {
       event.preventDefault()
-      tapCurrentLine()
+      tagCursorLine()
       return
     }
 
@@ -82,13 +73,6 @@ function handleKeyDown(event: KeyboardEvent): void {
       event.preventDefault()
       const { seekMs } = editor.stepBack()
       if (seekMs !== null) audioEngine.seek({ timeMs: seekMs })
-      return
-    }
-
-    case 'KeyP':
-    case 'KeyK': {
-      event.preventDefault()
-      audioEngine.toggle()
       return
     }
 
@@ -118,13 +102,13 @@ function handleKeyDown(event: KeyboardEvent): void {
 
     case 'BracketLeft': {
       event.preventDefault()
-      editor.nudgeSelection({ deltaMs: event.shiftKey ? -NUDGE_COARSE_MS : -NUDGE_FINE_MS })
+      editor.nudgeSelection({ deltaMs: -nudgeStep({ event }) })
       return
     }
 
     case 'BracketRight': {
       event.preventDefault()
-      editor.nudgeSelection({ deltaMs: event.shiftKey ? NUDGE_COARSE_MS : NUDGE_FINE_MS })
+      editor.nudgeSelection({ deltaMs: nudgeStep({ event }) })
       return
     }
 
@@ -160,21 +144,16 @@ function handleKeyDown(event: KeyboardEvent): void {
   }
 }
 
-function tapCurrentLine(): void {
-  const { tapOffsetMs } = useSettingsStore.getState()
-  const timeMs = Math.max(0, audioEngine.getTimeMs() - tapOffsetMs)
-  const { finishedResync } = useEditorStore.getState().tagCursor({ timeMs })
-
-  if (finishedResync) {
-    useEditorStore.getState().endResync()
-    audioEngine.pause()
-  }
+function seekStep({ event }: { event: KeyboardEvent }): number {
+  if (event.shiftKey) return SEEK_STEP_MS.fine
+  if (event.altKey) return SEEK_STEP_MS.coarse
+  return SEEK_STEP_MS.normal
 }
 
-function seekStep({ event }: { event: KeyboardEvent }): number {
-  if (event.shiftKey) return SEEK_STEP_FINE_MS
-  if (event.altKey) return SEEK_STEP_COARSE_MS
-  return SEEK_STEP_MS
+function nudgeStep({ event }: { event: KeyboardEvent }): number {
+  if (event.shiftKey) return NUDGE_STEP_MS.medium
+  if (event.altKey) return NUDGE_STEP_MS.coarse
+  return NUDGE_STEP_MS.fine
 }
 
 function isTypingTarget({ target }: { target: EventTarget | null }): boolean {

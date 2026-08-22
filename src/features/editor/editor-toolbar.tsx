@@ -1,13 +1,12 @@
+import { NUDGE_STEP_MS, SHORTCUT } from '../../shared/keyboard/shortcut-map.ts'
 import { formatDelta } from '../../shared/time/format-timestamp.ts'
 import { Button } from '../../shared/ui/button.tsx'
-import { audioEngine } from '../audio/audio-engine.ts'
+import { audioEngine, useAudioStore } from '../audio/audio-engine.ts'
 import { selectionRange, useEditorStore } from './editor-store.ts'
 import { countUntagged, findOrderingIssues } from './line-operations.ts'
 import { rangeLength } from './line-range.ts'
 import { findResyncStartMs } from './resync.ts'
-
-const FINE_NUDGE_MS = 100
-const COARSE_NUDGE_MS = 500
+import { tagCursorLine } from './tag-line.ts'
 
 export function EditorToolbar() {
   const lines = useEditorStore((state) => state.lines)
@@ -21,6 +20,7 @@ export function EditorToolbar() {
   const sortTimes = useEditorStore((state) => state.sortTimes)
   const beginResync = useEditorStore((state) => state.beginResync)
   const endResync = useEditorStore((state) => state.endResync)
+  const isReady = useAudioStore((state) => state.isReady)
 
   const range = selectionRange({ cursorIndex, selectionAnchor })
   const selectedCount = rangeLength({ range })
@@ -46,10 +46,16 @@ export function EditorToolbar() {
           Re-syncing lines {resync.range.start + 1}–{resync.range.end + 1}
         </span>
         <span className="text-teal-400/80">
-          Tap Space on each line. Lines outside the range are untouched.
+          Press {SHORTCUT.tagLine} on each line. Lines outside the range are untouched.
         </span>
-        <Button size="sm" variant="subtle" className="ml-auto" onClick={stopResync}>
-          Stop (Esc)
+        <Button
+          size="sm"
+          variant="subtle"
+          className="ml-auto"
+          shortcut={SHORTCUT.stop}
+          onClick={stopResync}
+        >
+          Stop
         </Button>
       </div>
     )
@@ -74,56 +80,106 @@ export function EditorToolbar() {
           >
             {issues.length} out of order
           </button>
-          <Button size="sm" variant="ghost" onClick={sortTimes}>
+          <Button
+            size="sm"
+            variant="ghost"
+            title="Re-deal the timestamps in ascending order"
+            onClick={sortTimes}
+          >
             Sort by time
           </Button>
         </>
       )}
 
-      <span className="ml-auto flex items-center gap-2">
+      <span className="ml-auto flex flex-wrap items-center gap-2">
         <span className="text-zinc-500">
           {selectedCount === 1
             ? `Line ${range.start + 1}`
             : `Lines ${range.start + 1}–${range.end + 1}`}
         </span>
+
         <Button
           size="sm"
-          variant="ghost"
-          onClick={() => nudgeSelection({ deltaMs: -COARSE_NUDGE_MS })}
+          variant="primary"
+          disabled={lines.length === 0 || !isReady}
+          shortcut={SHORTCUT.tagLine}
+          title={`Stamp the playhead onto this line and move on (${SHORTCUT.tagLine}). Works while paused.`}
+          onClick={tagCursorLine}
         >
-          {formatDelta({ deltaMs: -COARSE_NUDGE_MS })}
+          Tag line
         </Button>
+
+        <NudgeButton
+          deltaMs={-NUDGE_STEP_MS.coarse}
+          shortcut={SHORTCUT.nudgeBackCoarse}
+          onNudge={nudgeSelection}
+        />
+        <NudgeButton
+          deltaMs={-NUDGE_STEP_MS.medium}
+          shortcut={SHORTCUT.nudgeBackMedium}
+          onNudge={nudgeSelection}
+        />
+        <NudgeButton
+          deltaMs={NUDGE_STEP_MS.medium}
+          shortcut={SHORTCUT.nudgeForwardMedium}
+          onNudge={nudgeSelection}
+        />
+        <NudgeButton
+          deltaMs={NUDGE_STEP_MS.coarse}
+          shortcut={SHORTCUT.nudgeForwardCoarse}
+          onNudge={nudgeSelection}
+        />
+
         <Button
           size="sm"
-          variant="ghost"
-          onClick={() => nudgeSelection({ deltaMs: -FINE_NUDGE_MS })}
+          variant="subtle"
+          disabled={lines.length === 0}
+          title="Play this range from the top and re-tap it — lines outside stay as they are"
+          onClick={startResync}
         >
-          {formatDelta({ deltaMs: -FINE_NUDGE_MS })}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => nudgeSelection({ deltaMs: FINE_NUDGE_MS })}
-        >
-          {formatDelta({ deltaMs: FINE_NUDGE_MS })}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => nudgeSelection({ deltaMs: COARSE_NUDGE_MS })}
-        >
-          {formatDelta({ deltaMs: COARSE_NUDGE_MS })}
-        </Button>
-        <Button size="sm" variant="primary" onClick={startResync} disabled={lines.length === 0}>
           Re-sync
         </Button>
-        <Button size="sm" variant="ghost" onClick={clearSelectionTimes}>
+        <Button
+          size="sm"
+          variant="ghost"
+          title="Drop the timestamps on these lines, keeping the words"
+          onClick={clearSelectionTimes}
+        >
           Clear times
         </Button>
-        <Button size="sm" variant="danger" onClick={deleteSelection}>
+        <Button
+          size="sm"
+          variant="danger"
+          title="Remove these lines from the lyrics"
+          onClick={deleteSelection}
+        >
           Delete
         </Button>
       </span>
     </div>
+  )
+}
+
+function NudgeButton({
+  deltaMs,
+  shortcut,
+  onNudge,
+}: {
+  deltaMs: number
+  shortcut: string
+  onNudge: (input: { deltaMs: number }) => void
+}) {
+  const label = formatDelta({ deltaMs })
+
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      shortcut={shortcut}
+      shortcutDisplay="tooltip"
+      onClick={() => onNudge({ deltaMs })}
+    >
+      {label}
+    </Button>
   )
 }
