@@ -1,4 +1,4 @@
-import { memo, useState } from 'react'
+import { DragEvent, memo, useRef, useState } from 'react'
 import { NUDGE_STEP_MS, SHORTCUT } from '../../shared/keyboard/shortcut-map.ts'
 import { formatTimestamp } from '../../shared/time/format-timestamp.ts'
 import { parseTimestamp } from '../../shared/time/parse-timestamp.ts'
@@ -17,6 +17,13 @@ export type LyricRowProps = {
   isSelected: boolean
   isActive: boolean
   hasOrderingIssue: boolean
+  /** A drop would land the dragged block just above this row. */
+  isDropTarget: boolean
+  /** A drop would land it below the last row. */
+  isDropTargetEnd: boolean
+  onDragRowStart: (input: { index: number }) => void
+  onDragRowOver: (input: { index: number; isBelowMiddle: boolean }) => void
+  onDragRowEnd: () => void
 }
 
 export const LyricRow = memo(function LyricRow({
@@ -26,6 +33,11 @@ export const LyricRow = memo(function LyricRow({
   isSelected,
   isActive,
   hasOrderingIssue,
+  isDropTarget,
+  isDropTargetEnd,
+  onDragRowStart,
+  onDragRowOver,
+  onDragRowEnd,
 }: LyricRowProps) {
   const moveCursor = useEditorStore((state) => state.moveCursor)
   const setLineTime = useEditorStore((state) => state.setLineTime)
@@ -36,6 +48,8 @@ export const LyricRow = memo(function LyricRow({
   const [timeDraftInvalid, setTimeDraftInvalid] = useState(false)
   const [textDraft, setTextDraft] = useState<string | null>(null)
   const autoFocus = useAutoFocus<HTMLInputElement>()
+  /** Only a press on the grip arms a reorder, so selecting text never moves lines. */
+  const gripArmed = useRef(false)
 
   const isBlank = line.text.trim() === ''
 
@@ -84,8 +98,39 @@ export const LyricRow = memo(function LyricRow({
       data-line-index={index}
       onPointerDown={handleSelect}
       onDoubleClick={() => setTextDraft(line.text)}
+      draggable
+      onDragStart={(event: DragEvent<HTMLDivElement>) => {
+        if (!gripArmed.current) {
+          event.preventDefault()
+          return
+        }
+        event.dataTransfer.effectAllowed = 'move'
+        // Firefox refuses to start a drag with an empty payload.
+        event.dataTransfer.setData('text/plain', line.text)
+        onDragRowStart({ index })
+      }}
+      onDragOver={(event: DragEvent<HTMLDivElement>) => {
+        event.preventDefault()
+        event.dataTransfer.dropEffect = 'move'
+        const bounds = event.currentTarget.getBoundingClientRect()
+        onDragRowOver({
+          index,
+          isBelowMiddle: event.clientY > bounds.top + bounds.height / 2,
+        })
+      }}
+      onDrop={(event: DragEvent<HTMLDivElement>) => {
+        event.preventDefault()
+        gripArmed.current = false
+        onDragRowEnd()
+      }}
+      onDragEnd={() => {
+        gripArmed.current = false
+        onDragRowEnd()
+      }}
       className={cx(
-        'group flex items-center gap-2 border-l-2 py-1 pr-2 pl-1 text-sm',
+        'group flex items-center gap-2 border-y-2 border-l-2 py-1 pr-2 pl-1 text-sm',
+        isDropTarget ? 'border-t-teal-400' : 'border-t-transparent',
+        isDropTargetEnd ? 'border-b-teal-400' : 'border-b-transparent',
         // Not in the tab order, so its only focus is from a click — the cursor
         // highlight already shows which line is current.
         'focus:outline-none',
@@ -97,7 +142,21 @@ export const LyricRow = memo(function LyricRow({
             : 'border-l-transparent',
       )}
     >
-      <span className="w-8 shrink-0 text-right font-mono text-xs text-zinc-600 tabular-nums">
+      <span
+        aria-hidden
+        title={`Drag to reorder (${SHORTCUT.moveLine})`}
+        onPointerDown={() => {
+          gripArmed.current = true
+        }}
+        onPointerUp={() => {
+          gripArmed.current = false
+        }}
+        className="w-3 shrink-0 cursor-grab text-center text-xs text-zinc-700 opacity-0 group-hover:opacity-100"
+      >
+        ⠿
+      </span>
+
+      <span className="w-6 shrink-0 text-right font-mono text-xs text-zinc-600 tabular-nums">
         {index + 1}
       </span>
 

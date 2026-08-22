@@ -6,6 +6,7 @@ const SHORTCUTS = [
   { keys: SHORTCUT.stepBack, action: 'Undo last tag and jump back' },
   { keys: SHORTCUT.moveCursor, action: 'Move line cursor' },
   { keys: SHORTCUT.extendSelection, action: 'Select a range' },
+  { keys: SHORTCUT.moveLine, action: 'Move line(s) up / down' },
   { keys: SHORTCUT.seek, action: `Seek 3s (⇧ 1s · ${ALT_LABEL} 10s)` },
   {
     keys: `${SHORTCUT.nudgeBack} ${SHORTCUT.nudgeForward}`,

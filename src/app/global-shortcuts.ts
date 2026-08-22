@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { audioEngine } from '../features/audio/audio-engine.ts'
-import { useEditorStore } from '../features/editor/editor-store.ts'
+import { selectionRange, useEditorStore } from '../features/editor/editor-store.ts'
 import { findNextUntagged } from '../features/editor/line-operations.ts'
 import { tagCursorLine } from '../features/editor/tag-line.ts'
 import { downloadLrc } from '../features/io/export-lrc.ts'
@@ -78,12 +78,20 @@ function handleKeyDown(event: KeyboardEvent): void {
 
     case 'ArrowUp': {
       event.preventDefault()
+      if (event.altKey) {
+        editor.moveSelection({ beforeIndex: selectionRange(editor).start - 1 })
+        return
+      }
       editor.moveCursor({ index: editor.cursorIndex - 1, extendSelection: event.shiftKey })
       return
     }
 
     case 'ArrowDown': {
       event.preventDefault()
+      if (event.altKey) {
+        editor.moveSelection({ beforeIndex: selectionRange(editor).end + 2 })
+        return
+      }
       editor.moveCursor({ index: editor.cursorIndex + 1, extendSelection: event.shiftKey })
       return
     }

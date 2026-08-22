@@ -4,9 +4,11 @@ import {
   clearTimes,
   countUntagged,
   findActiveIndex,
+  findNeighbourLine,
   findNextTime,
   findNextUntagged,
   findOrderingIssues,
+  moveRange,
   removeBlankLines,
   setTime,
   shiftTimes,
@@ -159,5 +161,86 @@ describe('findNextTime', () => {
     ])
     expect(findNextTime({ lines, index: 0 })).toBe(3000)
     expect(findNextTime({ lines, index: 2 })).toBeNull()
+  })
+})
+
+describe('moveRange', () => {
+  const abc = build([
+    [1000, 'a'],
+    [2000, 'b'],
+    [3000, 'c'],
+  ])
+  const texts = (lines: LyricLine[]): string[] => lines.map((line) => line.text)
+
+  test('moves one line up, carrying its timestamp', () => {
+    const result = moveRange({ lines: abc, range: { start: 1, end: 1 }, beforeIndex: 0 })
+    expect(texts(result.lines)).toEqual(['b', 'a', 'c'])
+    expect(times(result.lines)).toEqual([2000, 1000, 3000])
+    expect(result.newStart).toBe(0)
+  })
+
+  test('moves one line down', () => {
+    const result = moveRange({ lines: abc, range: { start: 1, end: 1 }, beforeIndex: 3 })
+    expect(texts(result.lines)).toEqual(['a', 'c', 'b'])
+    expect(result.newStart).toBe(2)
+  })
+
+  test('moves a multi-line block and reports where it landed', () => {
+    const lines = build([
+      [null, 'a'],
+      [null, 'b'],
+      [null, 'c'],
+      [null, 'd'],
+      [null, 'e'],
+    ])
+    const result = moveRange({ lines, range: { start: 1, end: 2 }, beforeIndex: 4 })
+    expect(texts(result.lines)).toEqual(['a', 'd', 'b', 'c', 'e'])
+    expect(result.newStart).toBe(2)
+  })
+
+  test('moves a block to the very start and to the very end', () => {
+    const toStart = moveRange({ lines: abc, range: { start: 2, end: 2 }, beforeIndex: 0 })
+    expect(texts(toStart.lines)).toEqual(['c', 'a', 'b'])
+
+    const toEnd = moveRange({ lines: abc, range: { start: 0, end: 0 }, beforeIndex: 99 })
+    expect(texts(toEnd.lines)).toEqual(['b', 'c', 'a'])
+    expect(toEnd.newStart).toBe(2)
+  })
+
+  test('returns the original array when the order would not change', () => {
+    for (const beforeIndex of [1, 2]) {
+      const result = moveRange({ lines: abc, range: { start: 1, end: 1 }, beforeIndex })
+      expect(result.lines).toBe(abc)
+      expect(result.newStart).toBe(1)
+    }
+  })
+
+  test('a drop inside the dragged block is a no-op', () => {
+    const result = moveRange({ lines: abc, range: { start: 0, end: 2 }, beforeIndex: 2 })
+    expect(result.lines).toBe(abc)
+  })
+})
+
+describe('findNeighbourLine', () => {
+  const lines = build([
+    [null, 'intro not tagged'],
+    [1000, 'a'],
+    [null, ''],
+    [2000, 'b'],
+  ])
+
+  test('skips blank spacers in both directions', () => {
+    expect(findNeighbourLine({ lines, from: 1, step: 1 })).toBe(3)
+    expect(findNeighbourLine({ lines, from: 3, step: -1 })).toBe(1)
+  })
+
+  test('reports -1 when there is nothing further along', () => {
+    expect(findNeighbourLine({ lines, from: 3, step: 1 })).toBe(-1)
+    expect(findNeighbourLine({ lines, from: 0, step: -1 })).toBe(-1)
+  })
+
+  test('before the first timestamp, the line coming up is the first tagged one', () => {
+    expect(findNeighbourLine({ lines, from: -1, step: 1 })).toBe(1)
+    expect(findNeighbourLine({ lines, from: -1, step: -1 })).toBe(-1)
   })
 })

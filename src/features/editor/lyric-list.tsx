@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAudioStore } from '../audio/audio-engine.ts'
 import { useActiveLineIndex } from '../audio/use-current-time.ts'
 import { useSettingsStore } from '../settings/settings-store.ts'
@@ -11,11 +11,16 @@ export function LyricList() {
   const lines = useEditorStore((state) => state.lines)
   const cursorIndex = useEditorStore((state) => state.cursorIndex)
   const selectionAnchor = useEditorStore((state) => state.selectionAnchor)
+  const moveCursor = useEditorStore((state) => state.moveCursor)
+  const moveSelection = useEditorStore((state) => state.moveSelection)
   const isPlaying = useAudioStore((state) => state.isPlaying)
   const followPlayhead = useSettingsStore((state) => state.followPlayhead)
   const activeIndex = useActiveLineIndex()
 
   const containerRef = useRef<HTMLDivElement>(null)
+  /** Index the dragged block would land before; `lines.length` means the end. */
+  const [dropBeforeIndex, setDropBeforeIndex] = useState<number | null>(null)
+
   const range = selectionRange({ cursorIndex, selectionAnchor })
   const hasRange = selectionAnchor !== null
 
@@ -29,6 +34,31 @@ export function LyricList() {
     if (!isPlaying || !followPlayhead || activeIndex < 0) return
     scrollRowIntoView({ container: containerRef.current, index: activeIndex })
   }, [activeIndex, isPlaying, followPlayhead])
+
+  /** Grabbing a row outside the selection makes that row the selection. */
+  const handleDragRowStart = useCallback(
+    ({ index }: { index: number }) => {
+      const current = selectionRange(useEditorStore.getState())
+      if (!isInRange({ range: current, index })) {
+        moveCursor({ index, extendSelection: false })
+      }
+    },
+    [moveCursor],
+  )
+
+  const handleDragRowOver = useCallback(
+    ({ index, isBelowMiddle }: { index: number; isBelowMiddle: boolean }) => {
+      setDropBeforeIndex(isBelowMiddle ? index + 1 : index)
+    },
+    [],
+  )
+
+  const handleDragRowEnd = useCallback(() => {
+    setDropBeforeIndex((pending) => {
+      if (pending !== null) moveSelection({ beforeIndex: pending })
+      return null
+    })
+  }, [moveSelection])
 
   return (
     <div
@@ -47,6 +77,11 @@ export function LyricList() {
           isSelected={hasRange && isInRange({ range, index })}
           isActive={index === activeIndex}
           hasOrderingIssue={issues.has(index)}
+          isDropTarget={dropBeforeIndex === index}
+          isDropTargetEnd={dropBeforeIndex === lines.length && index === lines.length - 1}
+          onDragRowStart={handleDragRowStart}
+          onDragRowOver={handleDragRowOver}
+          onDragRowEnd={handleDragRowEnd}
         />
       ))}
     </div>

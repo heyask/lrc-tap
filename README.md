@@ -17,6 +17,11 @@ jumps playback to where it was, so you can retake it immediately.
 click the timestamp and type it. Select a range and hit **Re-sync** to re-tap
 just that stretch — every line outside the range is left exactly as it was.
 
+A strip above the waveform shows what a player would be displaying right now —
+the line before, the current one, and what is coming — with a bar filling to the
+next timestamp. Lines out of order? Grab the grip in the left margin and drag,
+or press `⌥↑` / `⌥↓`; the timestamps travel with the words.
+
 ## Shortcuts
 
 | Key | Action |
@@ -25,6 +30,7 @@ just that stretch — every line outside the range is left exactly as it was.
 | `Enter` | Tag the current line and move to the next — works while paused |
 | `Backspace` | Undo the last tag, clear it and rewind to it |
 | `↑` `↓` | Move the line cursor (`⇧` extends the selection) |
+| `⌥↑` `⌥↓` | Move the selected line(s) up or down |
 | `←` `→` | Seek 3s (`⇧` 1s, `⌥` 10s) |
 | `[` `]` | Nudge the selection by 10ms (`⇧` 100ms, `⌥` 500ms) |
 | `Tab` | Jump to the next line without a timestamp |

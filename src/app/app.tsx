@@ -4,6 +4,7 @@ import { useEditorStore } from '../features/editor/editor-store.ts'
 import { EditorToolbar } from '../features/editor/editor-toolbar.tsx'
 import { LyricList } from '../features/editor/lyric-list.tsx'
 import { PreviewPane } from '../features/editor/preview-pane.tsx'
+import { SubtitleStrip } from '../features/editor/subtitle-strip.tsx'
 import { ExportPanel } from '../features/io/export-panel.tsx'
 import { DropOverlay } from '../features/io/file-drop.tsx'
 import { FilesPanel } from '../features/io/files-panel.tsx'
@@ -60,6 +61,7 @@ export function App() {
         <main className="flex min-w-0 flex-1 flex-col">
           {mode === 'edit' && <EditorToolbar />}
           {mode === 'preview' ? <PreviewPane /> : lineCount === 0 ? <EmptyState /> : <LyricList />}
+          {mode === 'edit' && <SubtitleStrip />}
           <WaveformView />
         </main>
 

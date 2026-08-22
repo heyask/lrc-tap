@@ -167,3 +167,63 @@ export function findNextTime({
   }
   return null
 }
+
+/**
+ * Moves a block of lines, timestamps and all, to sit just before the line
+ * currently at `beforeIndex` (`lines.length` drops it at the end). The index is
+ * read against the array as the caller sees it on screen; the shift caused by
+ * lifting the block out is handled here. A move that would not change anything
+ * returns the original array so callers can skip an empty undo step.
+ */
+export function moveRange({
+  lines,
+  range,
+  beforeIndex,
+}: {
+  lines: LyricLine[]
+  range: LineRange
+  beforeIndex: number
+}): { lines: LyricLine[]; newStart: number } {
+  const target = Math.min(Math.max(0, beforeIndex), lines.length)
+  // Landing anywhere from the block's own start through the slot just after it
+  // leaves the order unchanged.
+  const isInsideBlock = target >= range.start && target <= range.end + 1
+  if (isInsideBlock) return { lines, newStart: range.start }
+
+  const block = lines.slice(range.start, range.end + 1)
+  const rest = [...lines.slice(0, range.start), ...lines.slice(range.end + 1)]
+  // Everything the block used to occupy is gone, so a destination past it moves up.
+  const newStart = target > range.end ? target - block.length : target
+
+  return {
+    lines: [...rest.slice(0, newStart), ...block, ...rest.slice(newStart)],
+    newStart,
+  }
+}
+
+/**
+ * Nearest line with words in one direction, for the subtitle strip's
+ * before/after context. Blank spacers are skipped — they are never sung, so
+ * showing one as the next line would be noise. When there is no current line
+ * yet (`from` is -1, the playhead sits before every timestamp) the line coming
+ * up is the first one actually tagged, and there is nothing behind it.
+ */
+export function findNeighbourLine({
+  lines,
+  from,
+  step,
+}: {
+  lines: LyricLine[]
+  from: number
+  step: number
+}): number {
+  if (from < 0) {
+    if (step < 0) return -1
+    return lines.findIndex((line) => line.timeMs !== null && line.text.trim() !== '')
+  }
+
+  for (let index = from + step; index >= 0 && index < lines.length; index += step) {
+    if (lines[index]?.text.trim() !== '') return index
+  }
+  return -1
+}

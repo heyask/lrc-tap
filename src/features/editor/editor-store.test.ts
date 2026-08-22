@@ -161,3 +161,56 @@ describe('re-sync a range', () => {
     expect(times()).toEqual([1000, 2000, 3000, 4000])
   })
 })
+
+describe('moveSelection', () => {
+  beforeEach(() => {
+    load([
+      [1000, 'a'],
+      [2000, 'b'],
+      [3000, 'c'],
+      [4000, 'd'],
+    ])
+  })
+
+  const texts = (): string[] => useEditorStore.getState().lines.map((line) => line.text)
+
+  test('carries the timestamp with the line', () => {
+    useEditorStore.getState().moveCursor({ index: 1, extendSelection: false })
+    useEditorStore.getState().moveSelection({ beforeIndex: 4 })
+
+    expect(texts()).toEqual(['a', 'c', 'd', 'b'])
+    expect(times()).toEqual([1000, 3000, 4000, 2000])
+  })
+
+  test('the cursor follows the line it moved', () => {
+    useEditorStore.getState().moveCursor({ index: 2, extendSelection: false })
+    useEditorStore.getState().moveSelection({ beforeIndex: 0 })
+    expect(cursor()).toBe(0)
+  })
+
+  test('a selected block moves together and stays selected', () => {
+    useEditorStore.getState().moveCursor({ index: 0, extendSelection: false })
+    useEditorStore.getState().moveCursor({ index: 1, extendSelection: true })
+    useEditorStore.getState().moveSelection({ beforeIndex: 4 })
+
+    expect(texts()).toEqual(['c', 'd', 'a', 'b'])
+    expect(selectionRange(useEditorStore.getState())).toEqual({ start: 2, end: 3 })
+  })
+
+  test('undo puts the whole move back in one step', () => {
+    useEditorStore.getState().moveCursor({ index: 3, extendSelection: false })
+    useEditorStore.getState().moveSelection({ beforeIndex: 0 })
+    useEditorStore.getState().undo()
+
+    expect(texts()).toEqual(['a', 'b', 'c', 'd'])
+  })
+
+  test('a move that changes nothing leaves no undo step behind', () => {
+    useEditorStore.getState().moveCursor({ index: 1, extendSelection: false })
+    const historyDepth = useEditorStore.getState().past.length
+    useEditorStore.getState().moveSelection({ beforeIndex: 2 })
+
+    expect(useEditorStore.getState().past).toHaveLength(historyDepth)
+    expect(texts()).toEqual(['a', 'b', 'c', 'd'])
+  })
+})

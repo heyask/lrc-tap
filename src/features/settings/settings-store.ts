@@ -12,12 +12,23 @@ export type Settings = {
   auditionOnSelect: boolean
   /** Keep the waveform and lyric list centred on the playhead during playback. */
   followPlayhead: boolean
+  /** Show the subtitle strip above the waveform. */
+  showSubtitleStrip: boolean
 }
 
 const DEFAULTS: Settings = {
   tapOffsetMs: 0,
   auditionOnSelect: true,
   followPlayhead: true,
+  showSubtitleStrip: true,
+}
+
+/** One entry per setting: the guard that decides whether a stored value is usable. */
+const VALIDATORS: { [Key in keyof Settings]: (value: unknown) => value is Settings[Key] } = {
+  tapOffsetMs: isNumber,
+  auditionOnSelect: isBoolean,
+  followPlayhead: isBoolean,
+  showSubtitleStrip: isBoolean,
 }
 
 type SettingsState = Settings & {
@@ -30,8 +41,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
 
   update: ({ patch }) => {
     set(patch)
-    const { tapOffsetMs, auditionOnSelect, followPlayhead } = get()
-    writeStoredSettings({ settings: { tapOffsetMs, auditionOnSelect, followPlayhead } })
+    writeStoredSettings({ state: get() })
   },
 }))
 
@@ -44,14 +54,9 @@ function readStoredSettings(): Partial<Settings> {
     if (parsed === null || typeof parsed !== 'object') return {}
 
     const stored: Partial<Settings> = {}
-    if ('tapOffsetMs' in parsed && typeof parsed.tapOffsetMs === 'number') {
-      stored.tapOffsetMs = parsed.tapOffsetMs
-    }
-    if ('auditionOnSelect' in parsed && typeof parsed.auditionOnSelect === 'boolean') {
-      stored.auditionOnSelect = parsed.auditionOnSelect
-    }
-    if ('followPlayhead' in parsed && typeof parsed.followPlayhead === 'boolean') {
-      stored.followPlayhead = parsed.followPlayhead
+    for (const key of settingKeys()) {
+      if (!(key in parsed)) continue
+      collectSetting({ stored, parsed, key })
     }
     return stored
   } catch {
@@ -59,6 +64,41 @@ function readStoredSettings(): Partial<Settings> {
   }
 }
 
-function writeStoredSettings({ settings }: { settings: Settings }): void {
+function writeStoredSettings({ state }: { state: Settings }): void {
+  const settings: Partial<Settings> = {}
+  for (const key of settingKeys()) collectSetting({ stored: settings, parsed: state, key })
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+}
+
+/**
+ * Copies one setting across only when it passes its own guard. Written
+ * generically so that adding a setting means adding a single validator entry.
+ */
+function collectSetting<Key extends keyof Settings>({
+  stored,
+  parsed,
+  key,
+}: {
+  stored: Partial<Settings>
+  parsed: object
+  key: Key
+}): void {
+  const value: unknown = Reflect.get(parsed, key)
+  if (VALIDATORS[key](value)) stored[key] = value
+}
+
+function settingKeys(): (keyof Settings)[] {
+  return Object.keys(VALIDATORS).filter(isSettingKey)
+}
+
+function isSettingKey(key: string): key is keyof Settings {
+  return key in VALIDATORS
+}
+
+function isNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
+function isBoolean(value: unknown): value is boolean {
+  return typeof value === 'boolean'
 }

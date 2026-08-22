@@ -4,6 +4,7 @@ import { EditorSnapshot, pushHistory } from './editor-snapshot.ts'
 import {
   clearTimes,
   insertLineAfter,
+  moveRange,
   removeBlankLines,
   removeRange,
   setText,
@@ -48,6 +49,7 @@ type EditorState = {
   nudgeSelection: (input: { deltaMs: number }) => void
   clearSelectionTimes: () => void
   deleteSelection: () => void
+  moveSelection: (input: { beforeIndex: number }) => void
   insertLineBelowCursor: () => void
   removeBlanks: () => void
   sortTimes: () => void
@@ -206,6 +208,24 @@ export const useEditorStore = create<EditorState>()((set, get) => {
         lines,
         cursorIndex: Math.min(range.start, Math.max(0, lines.length - 1)),
         selectionAnchor: null,
+      })
+    },
+
+    moveSelection: ({ beforeIndex }) => {
+      const state = get()
+      const range = selectionRange(state)
+      const moved = moveRange({ lines: state.lines, range, beforeIndex })
+      if (moved.lines === state.lines) return
+
+      set({
+        ...commit({ coalesceKey: null }),
+        lines: moved.lines,
+        // Keep the block that just moved selected, so it can be nudged again.
+        cursorIndex: moved.newStart + (state.cursorIndex - range.start),
+        selectionAnchor:
+          state.selectionAnchor === null
+            ? null
+            : moved.newStart + (state.selectionAnchor - range.start),
       })
     },
 
