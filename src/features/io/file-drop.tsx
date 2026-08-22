@@ -3,6 +3,18 @@ import { useNoticeStore } from '../../app/notice-store.ts'
 import { adoptDroppedFiles } from './load-files.ts'
 
 /**
+ * A drag only counts here if it is carrying files from outside. Reordering a
+ * lyric line is a drag too, and without this the whole window would light up as
+ * a file target every time one is moved.
+ *
+ * `types` rather than `files`: browsers withhold the file list until the drop
+ * itself, but the types are readable for the whole drag.
+ */
+function carriesFiles({ event }: { event: DragEvent }): boolean {
+  return event.dataTransfer?.types.includes('Files') === true
+}
+
+/**
  * Whole-window drop target. Dropping is the fastest way in, so it works
  * anywhere rather than only over a small zone.
  */
@@ -14,16 +26,21 @@ export function DropOverlay() {
     let depth = 0
 
     function onDragEnter(event: DragEvent): void {
-      if (event.dataTransfer === null) return
+      if (!carriesFiles({ event })) return
       depth += 1
       setIsDragging(true)
     }
 
     function onDragOver(event: DragEvent): void {
+      // Claiming the drop only for file drags leaves an in-app drag to the row
+      // that started it.
+      if (!carriesFiles({ event })) return
       event.preventDefault()
     }
 
-    function onDragLeave(): void {
+    function onDragLeave(event: DragEvent): void {
+      // Counted only against the enters that were counted, or the depth drifts.
+      if (!carriesFiles({ event })) return
       depth -= 1
       if (depth <= 0) {
         depth = 0
@@ -32,6 +49,7 @@ export function DropOverlay() {
     }
 
     function onDrop(event: DragEvent): void {
+      if (!carriesFiles({ event })) return
       event.preventDefault()
       depth = 0
       setIsDragging(false)
