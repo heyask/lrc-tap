@@ -48,8 +48,8 @@ line starts without clicking anything. The playhead stays put until you click,
 and pressing `Space` while skimming starts playback from the marker rather than
 from the playhead. `S` turns skimming off.
 
-Dragging pauses playback and scrubs instead: you hear only as much as you drag,
-so a line can be placed by ear. Drag a marker to move that line, `⌥`-drag to
+Dragging pauses playback and scrubs instead: the further you drag, the further
+it plays, so a line can be placed by ear. Drag a marker to move that line, `⌥`-drag to
 pan, `⌃`-scroll to zoom. "Hear the audio while dragging" silences both if you
 would rather work without sound.
 

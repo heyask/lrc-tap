@@ -2,8 +2,12 @@ import { useSettingsStore } from '../settings/settings-store.ts'
 import { useAudioStore } from './audio-engine.ts'
 import { planGrain } from './scrub-grain.ts'
 
-/** Dropping grains that would queue past this keeps the sound tied to the hand. */
-const MAX_LOOKAHEAD_MS = 150
+/**
+ * Dropping grains that would queue past this keeps the sound tied to the hand.
+ * Sits above one grain so a slow drag still gets whole slices through, and the
+ * queue drains rather than running away.
+ */
+const MAX_LOOKAHEAD_MS = 250
 /** Short ramps on each grain, so slices do not click into each other. */
 const FADE_S = 0.005
 
