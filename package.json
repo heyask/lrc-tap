@@ -1,0 +1,35 @@
+{
+  "name": "lrc-tap",
+  "version": "0.1.0",
+  "private": false,
+  "license": "MIT",
+  "author": "heyask",
+  "type": "module",
+  "description": "Browser-only LRC lyrics sync editor. Tap, tweak, export.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "idb-keyval": "^6.2.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.0",
+    "@tailwindcss/vite": "^4.1.14",
+    "@types/bun": "^1.4.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "tailwindcss": "^4.1.14",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9"
+  }
+}
