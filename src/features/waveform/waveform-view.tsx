@@ -7,7 +7,7 @@ import { useSettingsStore } from '../settings/settings-store.ts'
 import { usePeaksStore } from './peaks-store.ts'
 import { setSkimmerMs } from './skimmer.ts'
 import { WaveformCanvas } from './waveform-canvas.tsx'
-import { computeWindow } from './waveform-window.ts'
+import { computeWindow, zoomAroundRatio } from './waveform-window.ts'
 
 const MARKER_HIT_PX = 6
 /** Pointer travel that turns a click into a drag. Below it, a press is a plain seek. */
@@ -212,18 +212,28 @@ export function WaveformView() {
   function handleWheel(event: WheelEvent<HTMLDivElement>): void {
     if (durationMs === 0) return
 
+    const element = detailRef.current
+    if (element === null) return
+    const bounds = element.getBoundingClientRect()
+
     if (event.ctrlKey || event.metaKey) {
-      const anchorMs = timeAt({ clientX: event.clientX })
-      const nextSpan = clampSpan({ spanMs: spanMs * (event.deltaY > 0 ? 1.25 : 0.8) })
-      setSpanMs(nextSpan)
-      setCenterMs(anchorMs)
+      const { startMs, endMs } = currentWindow()
+      const nextSpanMs = clampSpan({ spanMs: spanMs * (event.deltaY > 0 ? 1.25 : 0.8) })
+
+      setSpanMs(nextSpanMs)
+      setCenterMs(
+        zoomAroundRatio({
+          startMs,
+          endMs,
+          ratio: (event.clientX - bounds.left) / bounds.width,
+          nextSpanMs,
+        }),
+      )
       updateSettings({ patch: { followPlayhead: false } })
       return
     }
 
-    const element = detailRef.current
-    if (element === null) return
-    const msPerPixel = spanMs / element.getBoundingClientRect().width
+    const msPerPixel = spanMs / bounds.width
     const delta = (event.deltaX !== 0 ? event.deltaX : event.deltaY) * msPerPixel
     const { startMs, endMs } = currentWindow()
     setCenterMs((startMs + endMs) / 2 + delta)
