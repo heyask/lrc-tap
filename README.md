@@ -1,5 +1,7 @@
 # LRC Tap
 
+[![LRC Tap — the lyric list mid-tap, the waveform showing every tagged line](docs/screenshot.png)](https://heyask.github.io/lrc-tap/)
+
 A browser-only editor for syncing lyrics to audio and exporting `.lrc` files.
 Drop in a track and its words, tap along, fix what's off, download the result.
 Nothing is uploaded — the audio never leaves your machine.
