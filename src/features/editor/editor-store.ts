@@ -27,6 +27,8 @@ type EditorState = {
   /** Set while a range is selected; null means the selection is just the cursor line. */
   selectionAnchor: number | null
   resync: ResyncSession | null
+  /** Row whose words are open for typing, held by id so inserts and moves cannot slide it. */
+  editingLineId: string | null
   past: EditorSnapshot[]
   future: EditorSnapshot[]
   lastCoalesceKey: string | null
@@ -54,6 +56,9 @@ type EditorState = {
   removeBlanks: () => void
   sortTimes: () => void
   setMetadataValue: (input: { key: string; value: string }) => void
+
+  beginTextEdit: (input: { id: string }) => void
+  endTextEdit: () => void
 
   beginResync: (input: { range: LineRange }) => void
   endResync: () => void
@@ -86,6 +91,7 @@ export const useEditorStore = create<EditorState>()((set, get) => {
       metadata: snapshot.metadata,
       cursorIndex: snapshot.cursorIndex,
       selectionAnchor: null,
+      editingLineId: null,
       lastCoalesceKey: null,
     }
   }
@@ -95,6 +101,7 @@ export const useEditorStore = create<EditorState>()((set, get) => {
     audioFileName: null,
     selectionAnchor: null,
     resync: null,
+    editingLineId: null,
     past: [],
     future: [],
     lastCoalesceKey: null,
@@ -106,6 +113,7 @@ export const useEditorStore = create<EditorState>()((set, get) => {
         cursorIndex: 0,
         selectionAnchor: null,
         resync: null,
+        editingLineId: null,
         past: [],
         future: [],
         lastCoalesceKey: null,
@@ -231,11 +239,13 @@ export const useEditorStore = create<EditorState>()((set, get) => {
 
     insertLineBelowCursor: () => {
       const { lines, cursorIndex } = get()
+      const inserted = insertLineAfter({ lines, index: cursorIndex })
       set({
         ...commit({ coalesceKey: null }),
-        lines: insertLineAfter({ lines, index: cursorIndex, text: '' }),
-        cursorIndex: cursorIndex + 1,
+        lines: inserted.lines,
+        cursorIndex: inserted.insertedIndex,
         selectionAnchor: null,
+        editingLineId: inserted.insertedLine.id,
       })
     },
 
@@ -262,6 +272,10 @@ export const useEditorStore = create<EditorState>()((set, get) => {
         metadata: { ...metadata, [key]: value },
       })
     },
+
+    beginTextEdit: ({ id }) => set({ editingLineId: id }),
+
+    endTextEdit: () => set({ editingLineId: null }),
 
     beginResync: ({ range }) => {
       const { lines } = get()

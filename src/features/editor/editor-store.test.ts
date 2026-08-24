@@ -214,3 +214,44 @@ describe('moveSelection', () => {
     expect(texts()).toEqual(['a', 'b', 'c', 'd'])
   })
 })
+
+describe('insertLineBelowCursor', () => {
+  const texts = (): string[] => useEditorStore.getState().lines.map((line) => line.text)
+
+  test('starts a document that has no lines yet', () => {
+    load([])
+    useEditorStore.getState().insertLineBelowCursor()
+
+    expect(texts()).toEqual([''])
+    expect(cursor()).toBe(0)
+  })
+
+  test('slots an untagged line under the cursor and follows it', () => {
+    load([
+      [1000, 'a'],
+      [2000, 'b'],
+    ])
+    useEditorStore.getState().insertLineBelowCursor()
+
+    expect(texts()).toEqual(['a', '', 'b'])
+    expect(times()).toEqual([1000, null, 2000])
+    expect(cursor()).toBe(1)
+  })
+
+  test('opens the new line for typing', () => {
+    load([[1000, 'a']])
+    useEditorStore.getState().insertLineBelowCursor()
+
+    const { lines, editingLineId } = useEditorStore.getState()
+    expect(editingLineId).toBe(lines[1]?.id ?? null)
+  })
+
+  test('undo takes the line back and closes the editor with it', () => {
+    load([[1000, 'a']])
+    useEditorStore.getState().insertLineBelowCursor()
+    useEditorStore.getState().undo()
+
+    expect(texts()).toEqual(['a'])
+    expect(useEditorStore.getState().editingLineId).toBeNull()
+  })
+})

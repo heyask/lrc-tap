@@ -8,6 +8,7 @@ import {
   findNextTime,
   findNextUntagged,
   findOrderingIssues,
+  insertLineAfter,
   moveRange,
   removeBlankLines,
   setTime,
@@ -242,5 +243,43 @@ describe('findNeighbourLine', () => {
   test('before the first timestamp, the line coming up is the first tagged one', () => {
     expect(findNeighbourLine({ lines, from: -1, step: 1 })).toBe(1)
     expect(findNeighbourLine({ lines, from: -1, step: -1 })).toBe(-1)
+  })
+})
+
+describe('insertLineAfter', () => {
+  const lines = build([
+    [1000, 'a'],
+    [2000, 'b'],
+  ])
+
+  test('drops an untagged line just below the index and says where it went', () => {
+    const { lines: next, insertedLine, insertedIndex } = insertLineAfter({ lines, index: 0 })
+
+    expect(next.map((line) => line.text)).toEqual(['a', '', 'b'])
+    expect(insertedIndex).toBe(1)
+    expect(next[1]).toBe(insertedLine)
+    expect(insertedLine.timeMs).toBeNull()
+  })
+
+  test('leaves the lines it did not touch alone', () => {
+    const { lines: next } = insertLineAfter({ lines, index: 0 })
+
+    expect(next[0]).toBe(lines[0])
+    expect(next[2]).toBe(lines[1])
+    expect(lines).toHaveLength(2)
+  })
+
+  test('appends when the index is the last line', () => {
+    const { lines: next, insertedIndex } = insertLineAfter({ lines, index: 1 })
+
+    expect(next.map((line) => line.text)).toEqual(['a', 'b', ''])
+    expect(insertedIndex).toBe(2)
+  })
+
+  test('starts a document that has no lines yet at index 0', () => {
+    const { lines: next, insertedLine, insertedIndex } = insertLineAfter({ lines: [], index: 0 })
+
+    expect(next).toEqual([insertedLine])
+    expect(insertedIndex).toBe(0)
   })
 })

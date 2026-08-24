@@ -1,4 +1,9 @@
+import { useEditorStore } from '../features/editor/editor-store.ts'
+import { Button } from '../shared/ui/button.tsx'
+
 export function EmptyState() {
+  const insertLineBelowCursor = useEditorStore((state) => state.insertLineBelowCursor)
+
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
       <div>
@@ -17,6 +22,10 @@ export function EmptyState() {
         <Step number={5} text="Fix a line with [ and ] or by dragging its waveform marker." />
         <Step number={6} text="Select a range and hit Re-sync to redo just that part." />
       </ol>
+
+      <Button variant="primary" onClick={insertLineBelowCursor}>
+        Start from scratch
+      </Button>
     </div>
   )
 }

@@ -95,6 +95,20 @@ describe('a lyric row', () => {
     expect(document.querySelector('input')).toBeNull()
   })
 
+  test('a line added below the cursor opens for typing straight away', () => {
+    fireEvent.pointerDown(rowAt({ index: 0 }))
+    act(() => editor().insertLineBelowCursor())
+
+    const field = document.querySelector('input')
+    if (field === null) throw new Error('the new line did not open for typing')
+
+    fireEvent.change(field, { target: { value: 'a line of my own' } })
+    fireEvent.keyDown(field, { key: 'Enter' })
+
+    expect(texts()).toEqual(['first', 'a line of my own', 'second', 'third'])
+    expect(document.querySelector('input')).toBeNull()
+  })
+
   test('a drag that did not start on the grip is refused', () => {
     const started = fireEvent.dragStart(rowAt({ index: 0 }), {
       dataTransfer: { setData: () => undefined, effectAllowed: '' },

@@ -56,6 +56,12 @@ function handleKeyDown(event: KeyboardEvent): void {
     return
   }
 
+  if (modifier && event.code === 'Enter') {
+    event.preventDefault()
+    editor.insertLineBelowCursor()
+    return
+  }
+
   if (modifier) return
 
   switch (event.code) {

@@ -3,6 +3,7 @@ import { ALT_LABEL, SHORTCUT } from '../shared/keyboard/shortcut-map.ts'
 const SHORTCUTS = [
   { keys: SHORTCUT.playPause, action: 'Play / pause' },
   { keys: SHORTCUT.tagLine, action: 'Tag this line and move on' },
+  { keys: SHORTCUT.addLine, action: 'Add a line below and type it' },
   { keys: SHORTCUT.stepBack, action: 'Undo last tag and jump back' },
   { keys: SHORTCUT.moveCursor, action: 'Move line cursor' },
   { keys: SHORTCUT.extendSelection, action: 'Select a range' },

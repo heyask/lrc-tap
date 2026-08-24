@@ -26,6 +26,7 @@ const SHIFT_LABEL = '⇧'
 export const SHORTCUT = {
   playPause: 'Space',
   tagLine: 'Enter',
+  addLine: `${MOD_LABEL}Enter`,
   stepBack: '⌫',
   moveCursor: '↑ ↓',
   moveLineUp: `${ALT_LABEL}↑`,

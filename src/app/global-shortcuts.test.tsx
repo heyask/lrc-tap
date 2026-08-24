@@ -133,6 +133,13 @@ describe('the keyboard map', () => {
     expect(selectionRange(editor())).toEqual({ start: 0, end: 2 })
   })
 
+  test('adds an empty line below the cursor', () => {
+    press({ code: 'Enter', metaKey: true })
+
+    expect(texts()).toEqual(['one', '', 'two', 'three'])
+    expect(editor().cursorIndex).toBe(1)
+  })
+
   test('keeps its hands off while a field has focus', () => {
     const field = document.querySelector('[data-testid="field"]')
     if (field === null) throw new Error('missing field')

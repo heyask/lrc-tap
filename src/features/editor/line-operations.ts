@@ -58,18 +58,23 @@ export function clearTimes({
   )
 }
 
-export function insertLineAfter({
-  lines,
-  index,
-  text,
-}: {
+/**
+ * Puts a fresh, untagged line just below `index` and says where it landed — on a
+ * document with no lines yet that is 0, not below the cursor. The caller gets the
+ * line itself back so it can open it for typing straight away.
+ */
+export function insertLineAfter({ lines, index }: { lines: LyricLine[]; index: number }): {
   lines: LyricLine[]
-  index: number
-  text: string
-}): LyricLine[] {
-  const next = [...lines]
-  next.splice(index + 1, 0, createLyricLine({ text, timeMs: null }))
-  return next
+  insertedLine: LyricLine
+  insertedIndex: number
+} {
+  const insertedLine = createLyricLine({ text: '', timeMs: null })
+  const insertedIndex = Math.min(Math.max(0, index + 1), lines.length)
+  return {
+    lines: [...lines.slice(0, insertedIndex), insertedLine, ...lines.slice(insertedIndex)],
+    insertedLine,
+    insertedIndex,
+  }
 }
 
 export function removeRange({

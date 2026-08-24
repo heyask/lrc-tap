@@ -1,4 +1,4 @@
-import { DragEvent, memo, useRef, useState } from 'react'
+import { DragEvent, memo, useRef } from 'react'
 import { NUDGE_STEP_MS, SHORTCUT } from '../../shared/keyboard/shortcut-map.ts'
 import { cx } from '../../shared/ui/cx.ts'
 import { audioEngine } from '../audio/audio-engine.ts'
@@ -40,9 +40,11 @@ export const LyricRow = memo(function LyricRow({
   onDragRowEnd,
 }: LyricRowProps) {
   const moveCursor = useEditorStore((state) => state.moveCursor)
+  const beginTextEdit = useEditorStore((state) => state.beginTextEdit)
+  const endTextEdit = useEditorStore((state) => state.endTextEdit)
+  const isEditingText = useEditorStore((state) => state.editingLineId === line.id)
   const auditionOnSelect = useSettingsStore((state) => state.auditionOnSelect)
 
-  const [isEditingText, setIsEditingText] = useState(false)
   /** Only a press on the grip arms a reorder, so selecting text never moves lines. */
   const gripArmed = useRef(false)
 
@@ -70,7 +72,7 @@ export const LyricRow = memo(function LyricRow({
       tabIndex={-1}
       data-line-index={index}
       onPointerDown={handleSelect}
-      onDoubleClick={() => setIsEditingText(true)}
+      onDoubleClick={() => beginTextEdit({ id: line.id })}
       draggable
       onDragStart={(event: DragEvent<HTMLDivElement>) => {
         if (!gripArmed.current) {
@@ -136,7 +138,7 @@ export const LyricRow = memo(function LyricRow({
         text={line.text}
         isActive={isActive}
         isEditing={isEditingText}
-        onClose={() => setIsEditingText(false)}
+        onClose={endTextEdit}
       />
 
       <span className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">

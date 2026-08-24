@@ -17,6 +17,7 @@ export function EditorToolbar() {
   const nudgeSelection = useEditorStore((state) => state.nudgeSelection)
   const clearSelectionTimes = useEditorStore((state) => state.clearSelectionTimes)
   const deleteSelection = useEditorStore((state) => state.deleteSelection)
+  const insertLineBelowCursor = useEditorStore((state) => state.insertLineBelowCursor)
   const sortTimes = useEditorStore((state) => state.sortTimes)
   const beginResync = useEditorStore((state) => state.beginResync)
   const endResync = useEditorStore((state) => state.endResync)
@@ -129,6 +130,17 @@ export function EditorToolbar() {
           shortcut={SHORTCUT.nudgeForwardCoarse}
           onNudge={nudgeSelection}
         />
+
+        <Button
+          size="sm"
+          variant="subtle"
+          shortcut={SHORTCUT.addLine}
+          shortcutDisplay="tooltip"
+          title={`Add an empty line below this one and start typing it (${SHORTCUT.addLine})`}
+          onClick={insertLineBelowCursor}
+        >
+          Add line
+        </Button>
 
         <Button
           size="sm"
