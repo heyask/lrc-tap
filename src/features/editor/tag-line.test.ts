@@ -11,6 +11,9 @@ const times = () => useEditorStore.getState().lines.map((line) => line.timeMs)
 describe('the tap offset', () => {
   beforeEach(async () => {
     await resetApp()
+    // The audio element outlives resetApp, so a test that left it playing
+    // would decide the next one's answer.
+    audioEngine.pause()
     useEditorStore.getState().loadDocument({
       lines: [createLyricLine({ text: 'one', timeMs: null })],
       metadata: {},
@@ -24,12 +27,16 @@ describe('the tap offset', () => {
     audioEngine.play()
     audioEngine.seek({ timeMs: 4000 })
 
-    // Tapping the instant the clock was sampled leaves nothing to extrapolate,
-    // so whatever is missing from 4000 is the offset and only the offset.
-    tagCursorLine({ atPerfMs: performance.now() })
+    // Read the playhead at the very instant the tap claims to have happened.
+    // Both readings then extrapolate to the same point, so the whole gap
+    // between them is the offset rather than however far the clock ran.
+    const atPerfMs = performance.now()
+    const { timeMs: playheadMs, isPlaying } = audioEngine.getTimeAtMs({ perfMs: atPerfMs })
+    expect(isPlaying).toBe(true)
 
-    expect(times()[0]).toBeCloseTo(3800, -1)
-    audioEngine.pause()
+    tagCursorLine({ atPerfMs })
+
+    expect(times()[0]).toBe(Math.round(playheadMs - 200))
   })
 
   test('is left out of a tap made while paused, where there is no delay to cancel', () => {
