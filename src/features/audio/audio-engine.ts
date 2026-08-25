@@ -171,17 +171,26 @@ export const audioEngine = {
    * Position at the instant something happened, given that event's `timeStamp`.
    * Reading `currentTime` inside a handler is late twice over: the media clock
    * ticks in steps, and a keypress can wait behind a frame of canvas work.
+   *
+   * `isPlaying` reports whether that position came from a running clock, which
+   * is the same thing that decides whether the caller's reading carries human
+   * reaction delay.
    */
-  getTimeAtMs({ perfMs }: { perfMs: number }): number {
-    if (element.paused || sample === null) return element.currentTime * 1000
+  getTimeAtMs({ perfMs }: { perfMs: number }): { timeMs: number; isPlaying: boolean } {
+    if (element.paused || sample === null) {
+      return { timeMs: element.currentTime * 1000, isPlaying: false }
+    }
 
-    return extrapolateMediaMs({
-      sampleMediaMs: sample.mediaMs,
-      samplePerfMs: sample.perfMs,
-      atPerfMs: perfMs,
-      playbackRate: element.playbackRate,
-      durationMs: useAudioStore.getState().durationMs,
-    })
+    return {
+      timeMs: extrapolateMediaMs({
+        sampleMediaMs: sample.mediaMs,
+        samplePerfMs: sample.perfMs,
+        atPerfMs: perfMs,
+        playbackRate: element.playbackRate,
+        durationMs: useAudioStore.getState().durationMs,
+      }),
+      isPlaying: true,
+    }
   },
 
   subscribeTime(listener: TimeListener): () => void {

@@ -26,7 +26,9 @@ export function SettingsPanel() {
         </span>
       </Field>
       <p className="mb-2 text-xs text-zinc-600">
-        Subtracted from every tap. Raise it if your timestamps land consistently late.
+        Subtracted from taps made while the audio plays, where your reaction delay sits. Raise it if
+        those timestamps land consistently late. Tags placed while paused keep the playhead position
+        as it is.
       </p>
 
       <label className="flex items-center gap-2 py-1 text-sm text-zinc-300">
